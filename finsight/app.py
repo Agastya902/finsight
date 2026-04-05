@@ -56,11 +56,12 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 NAV = {
-    "📊  Equity Analysis": "equity",
-    "⚡  Strategy Backtest": "strategy",
-    "🔬  Portfolio Builder": "portfolio",
+    "📊  Platform Overview": "overview",
+    "📈  Equity Intelligence": "equity",
+    "🧠  Algorithmic Validator": "strategy",
+    "⚖️  Portfolio Builder": "portfolio",
 }
-page = st.sidebar.radio("nav", list(NAV.keys()), index=0, label_visibility="collapsed")
+page = st.sidebar.radio("Navigation", list(NAV.keys()), index=0, label_visibility="collapsed")
 page_key = NAV[page]
 
 st.sidebar.markdown("<div style='height: 24px'></div>", unsafe_allow_html=True)
@@ -81,7 +82,28 @@ st.sidebar.markdown("""
 # PAGES
 # ══════════════════════════════════════════
 
-if page_key == "equity":
+if page_key == "overview":
+    st.markdown("""
+    <div class="hero-container">
+        <div class="hero-title">Explainable Portfolio Intelligence</div>
+        <div class="hero-subtitle">
+            FinSight helps you analyze assets, compare strategies, build portfolios, and understand outcomes — all in one place.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        utils.render_metric_card("Equity Analysis", "Deep-dive into any public asset with benchmark comparisons, moving averages, and risk metrics.")
+    with c2:
+        utils.render_metric_card("Strategy Backtest", "Test moving-average crossover strategies against simple buy-and-hold to evaluate alpha generation.")
+    with c3:
+        utils.render_metric_card("Portfolio Builder", "Construct multi-asset portfolios, optimize weights via Markowitz, and visualize the efficient frontier.")
+
+    st.session_state['ai_context'] = {'asset': 'N/A', 'horizon': 'N/A'}
+
+
+elif page_key == "equity":
     # ── Controls Row ──
     c1, c2, c3 = st.columns([1.4, 1.4, 2.2])
     asset_sel = c1.selectbox("Asset", options=list(universe.EQUITY_UNIVERSE.keys()), index=0)

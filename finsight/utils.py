@@ -51,26 +51,28 @@ def inject_premium_css():
         display: none;
     }
 
-    /* ── Kill Radio Buttons, Replace With Nav Items ── */
+    /* ── Navigation: Hide only the radio dot, keep labels visible ── */
     [data-testid="stSidebar"] [role="radiogroup"] {
         gap: 2px !important;
     }
-    /* Hide every radio circle / dot */
-    [data-testid="stSidebar"] [role="radiogroup"] [data-testid="stMarkdownContainer"],
-    [data-testid="stSidebar"] [role="radiogroup"] div[role="radio"],
+    /* Hide only the small circular radio input dot */
     [data-testid="stSidebar"] [role="radiogroup"] input[type="radio"] {
         display: none !important;
     }
-    /* Style labels as clean nav menu items */
+    [data-testid="stSidebar"] [role="radiogroup"] [data-testid="stMarkdown"] {
+        /* keep labels visible */
+    }
+    /* Style each radio option as a full-width nav item */
     [data-testid="stSidebar"] [role="radiogroup"] label {
-        display: block !important;
+        display: flex !important;
+        align-items: center !important;
         width: 100% !important;
-        padding: 10px 16px !important;
-        margin: 0 !important;
-        border-radius: 4px;
+        padding: 11px 16px !important;
+        margin: 1px 0 !important;
+        border-radius: 6px;
         cursor: pointer;
         color: #9CA3AF;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 400;
         transition: background-color 0.15s ease, color 0.15s ease;
         border-left: 2px solid transparent;
@@ -79,23 +81,18 @@ def inject_premium_css():
         background-color: rgba(255,255,255,0.04);
         color: #E5E7EB;
     }
-    /* Active item */
-    [data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"],
+    /* Active nav item */
     [data-testid="stSidebar"] [role="radiogroup"] [aria-checked="true"] label {
         background-color: rgba(59, 130, 246, 0.08) !important;
         color: #3B82F6 !important;
         font-weight: 500 !important;
         border-left: 2px solid #3B82F6 !important;
-        border-radius: 0 4px 4px 0;
+        border-radius: 0 6px 6px 0;
     }
-    /* Kill baseweb radio wrapper spacing */
+    /* Clean up baseweb radio wrapper */
     [data-testid="stSidebar"] [data-baseweb="radio"] {
         margin-bottom: 0 !important;
         background: transparent !important;
-    }
-    /* Hide the radio label header ("WORKSPACE") */
-    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
-        display: none !important;
     }
 
     /* ── Metric Cards ── */
