@@ -2,41 +2,40 @@ import re
 
 def generate_response(query: str, current_state: dict) -> str:
     """
-    Parses a user query and returns a highly institutional, context-aware artificial intelligence response.
-    Relies on heuristics mapped against the active Streamlit session state rather than external API limits.
+    Parses a user query and returns a clean, direct, SaaS product assistant response.
+    Relies on heuristics mapped against the active Streamlit session state.
     """
     q = query.lower().strip()
     
-    # State bindings
-    asset = current_state.get('asset', 'the designated asset')
-    bench = current_state.get('benchmark', 'the market benchmark')
-    horizon = current_state.get('horizon', 'the selected temporal timeline')
-    sharpe = current_state.get('sharpe', 'the computed Sharpe coefficient')
-    ann_ret = current_state.get('ann_ret', 'the calculated yield')
-    vol = current_state.get('vol', 'the asset volatility')
+    asset = current_state.get('asset', 'the selected asset')
+    bench = current_state.get('benchmark', 'the benchmark')
+    horizon = current_state.get('horizon', 'the selected timeline')
+    sharpe = current_state.get('sharpe', 'the Sharpe ratio')
+    ann_ret = current_state.get('ann_ret', 'the calculated return')
     max_dd = current_state.get('max_dd', 'the maximum drawdown')
 
-    # Core Explanations
     if any(k in q for k in ["explain my sharpe", "what is sharpe", "sharpe ratio"]):
-        return f"**Sharpe Ratio Profile:** Your current configuration yields a Sharpe of **{sharpe}**. The Sharpe ratio mathematically penalizes returns for excess volatility. A ratio above 1.0 generally signifies institutional-alpha generation via superior risk-adjusted yields, whereas sub-1.0 suggests the returns do not adequately compensate for the embedded volatility exposure tracking {horizon}."
+        return f"**Sharpe Ratio Breakdown:** Your current configuration yields a Sharpe of **{sharpe}**. This metric evaluates your return per unit of risk. A ratio above 1.0 means you are adequately compensated for the volatility you incur, while a ratio below 1.0 suggests the risk might outweigh the historical rewards."
 
     if any(k in q for k in ["why is my portfolio risky", "risk", "risky", "drawdown"]):
-        return f"**Systematic Risk Topology:** The current architecture reveals an annualized volatility of **{vol}** alongside a maximum trough depth of **{max_dd}**. High volatility typically originates from either idiosyncratic single-stock exposure or broader macroeconomic beta factors. To mitigate this {max_dd} drawdown impact, institutional managers implement severe diversification or non-correlated hedging layers."
+        return f"**Risk Assessment:** The current setup indicates a maximum historical loss (drawdown) of **{max_dd}**. High drawdowns typically occur when assets move highly correlated during macroeconomic stress. To reduce this, consider allocating capital to historically non-correlated assets via the Builder tab."
 
     if "compare" in q and "vs" in q:
-        return f"**Comparative Alpha Generation:** In evaluating {asset} against {bench} strictly across {horizon}, the divergence in cumulative returns and correlation matrices dictates relative performance. Typically, assets consistently bridging the gap above their normalized benchmark line indicate superior fundamental execution or strong sector tailwinds."
+        return f"**Asset Comparison:** When comparing {asset} directly against {bench} over {horizon}, the goal is to isolate relative performance ('alpha'). If the asset's cumulative trajectory consistently outperforms the benchmark's baseline trend, it suggests strong fundamental execution."
 
     if any(k in q for k in ["explain this chart", "chart", "graph"]):
-        return f"**Visual Telemetry Analysis:** The displayed metric topologies indicate performance clustering across {horizon}. Downward deviations signify transient capital depreciation, whereas the smoothing moving averages (SMAs) isolate the noise to reveal macroeconomic trajectories. Toggling these SMAs provides rigorous trendline boundaries for entry and exit protocols."
+        return f"**Chart Analysis:** The current timeseries tracks absolute pricing behavior over {horizon}. The moving average overlays (like the 50-day and 200-day SMAs) help strip away daily noise to reveal the longer-term structural trend. Crossovers between these averages often act as basic entry/exit momentum signals."
 
     if any(k in q for k in ["diversification", "diversify"]):
-        return "**Capital Allocation Strategy:** Institutional scaling requires minimizing inter-asset correlation. To augment the resilience of your current construct, transition to the Portfolio Builder tab, inject non-correlated macro components (such as utility identifiers or government treasury proxies), and execute an optimization constraint to solve for Maximum Sharpe on the frontier."
+        return "**Diversification Strategy:** True diversification means mapping assets that don't fall at the same time. Access the Portfolio Builder natively, mix cross-sector assets (e.g. Technology + Utilities + Consumer Staples), and click 'Execute' to let the optimizer construct an efficient frontier allocation based on minimizing overlapping risk."
 
     if any(k in q for k in ["build diversified", "diversified portfolio"]):
-        return "Navigate to the **Portfolio Builder** tab. Input an array of distinct sector leaders (e.g., AAPL for Tech, JNJ for Healthcare, XOM for Energy). Execute the 'Maximum Sharpe' mathematical priority to effortlessly synthesize a robustly diversified exposure matrix."
+        return "To build a diversified allocation, navigate to the **Portfolio Builder** tab. Input 3-5 distinct sector leaders, then use the 'Max Sharpe' or 'Min Volatility' algorithms to calculate the exact optimal capital weights without having to guess manually."
+
+    if any(k in q for k in ["explain this dashboard", "explain dashboard", "page"]):
+        return f"**Page Overview:** This dashboard calculates the underlying risk/reward paradigm for {asset} against {bench}. It outputs trailing compound yields (**{ann_ret}**), adjusts that yield for volatility (**{sharpe} Sharpe**), and displays exactly how far the capital could drop at its worst (**{max_dd} Drawdown**)."
 
     if "hello" in q or "hi" in q:
-        return "Greetings. I am FinSight AI, your institutional quantitative copilot. I am actively tracking your configurations across {asset} boundaries. How may I assist your analysis?"
+        return f"Hi! I'm FinSight Copilot. I'm currently tracking the state for {asset}. How can I help you analyze the data today?"
 
-    # Fallback response
-    return "Analyst Request Acknowledged. While your specific parameter falls outside my immediate heuristic boundary, I advise cross-referencing your query with our core quantitative metrics: Evaluate your Sharpe Ratio for risk-adjusted performance or transition to the Optimization tab to simulate the Markowitz efficient baseline natively."
+    return "I am currently focused on core analytics (Sharpe, Returns, Volatility, optimization arrays). For best results, select an asset in the dashboard and ask me to evaluate its drawdown, benchmark variance, or chart logic."

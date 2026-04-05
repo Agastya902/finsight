@@ -31,7 +31,7 @@ def inject_premium_css():
     
     /* Clean up main padding */
     .block-container {
-        padding-top: 2rem !important;
+        padding-top: 1.5rem !important;
         max-width: 1400px;
     }
     
@@ -39,9 +39,8 @@ def inject_premium_css():
     .metric-card {
         background-color: #111827;
         border: 1px solid #1F2937;
-        border-radius: 8px;
-        padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        padding: 20px;
         transition: transform 0.15s ease-in-out, border-color 0.15s ease-in-out;
         margin-bottom: 1.5rem;
     }
@@ -50,15 +49,15 @@ def inject_premium_css():
         transform: translateY(-1px);
     }
     .metric-title {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #9CA3AF;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 500;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
     }
     .metric-value {
-        font-size: 1.85rem;
+        font-size: 1.7rem;
         font-weight: 600;
         color: #F9FAFB;
         margin-bottom: 0px;
@@ -66,20 +65,19 @@ def inject_premium_css():
     
     /* Elegant Insight / Callout Boxes */
     .insight-box {
-        background-color: #111827;
-        border-left: 3px solid #C5A572;
-        padding: 20px 24px;
-        margin: 24px 0;
-        font-size: 1.05rem;
-        color: #E5E7EB;
-        line-height: 1.6;
-        border-top-right-radius: 6px;
-        border-bottom-right-radius: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        background-color: rgba(17, 24, 39, 0.5);
+        border: 1px solid #1F2937;
+        border-left: 3px solid #3B82F6;
+        padding: 18px 24px;
+        margin: 16px 0;
+        font-size: 0.95rem;
+        color: #D1D5DB;
+        line-height: 1.5;
+        border-radius: 4px;
     }
     .insight-label {
-        color: #C5A572;
-        font-size: 0.8rem;
+        color: #3B82F6;
+        font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -89,63 +87,106 @@ def inject_premium_css():
     /* Sophisticated Hero Section */
     .hero-container {
         text-align: left;
-        padding: 48px 0px 32px 0px;
+        padding: 24px 0px 32px 0px;
         border-bottom: 1px solid #1F2937;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
     }
     .hero-title {
-        font-size: 2.8rem;
+        font-size: 2.2rem;
         font-weight: 600;
         color: #F9FAFB;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
     .hero-subtitle {
-        font-size: 1.2rem;
+        font-size: 1.05rem;
         color: #9CA3AF;
-        font-weight: 300;
-        line-height: 1.6;
+        font-weight: 400;
+        line-height: 1.5;
         max-width: 800px;
     }
     
-    /* Streamlit Sidebar Polish */
+    /* ------------------------------------- */
+    /* SIDEBAR NAVIGATION REDESIGN           */
+    /* ------------------------------------- */
     section[data-testid="stSidebar"] {
         background-color: #0A0E17 !important;
         border-right: 1px solid #1F2937 !important;
+        padding-top: 1rem !important;
     }
     [data-testid="stSidebarNav"] {
         display: none;
     }
     
-    /* Elegant standard headings */
+    /* Ruthlessly destroy Streamlit Radio Buttons to format as generic buttons */
+    /* Hide the actual radio circle entirely */
+    [data-testid="stSidebar"] [role="radiogroup"] div[role="radio"] {
+        display: none !important;
+    }
+    /* Expand label blocks to look like proper sidebar menu items */
+    [data-testid="stSidebar"] [role="radiogroup"] label {
+        padding: 12px 16px;
+        margin-bottom: 4px;
+        background-color: transparent;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: block;
+        width: 100%;
+        color: #9CA3AF;
+    }
+    /* Subtle hover effect */
+    [data-testid="stSidebar"] [role="radiogroup"] label:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+        color: #F9FAFB;
+    }
+    /* Active Link state wrapper */
+    [data-testid="stSidebar"] [data-baseweb="radio"] {
+        margin-bottom: 0px !important;
+        background: transparent !important;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] [aria-checked="true"] label {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: #3B82F6 !important;
+        border-left: 2px solid #3B82F6 !important;
+        font-weight: 500 !important;
+        border-top-left-radius: 0px;
+        border-bottom-left-radius: 0px;
+    }
+    
+    /* Elegant headings */
     h1, h2, h3, h4 {
         font-family: 'Inter', -apple-system, sans-serif !important;
         font-weight: 500 !important;
-        letter-spacing: -0.02em !important;
+        letter-spacing: -0.01em !important;
     }
     
-    /* Export Button Styling */
-    .stDownloadButton button {
-        background-color: #111827 !important;
-        border: 1px solid #3B82F6 !important;
-        color: #3B82F6 !important;
+    /* Button Overrides */
+    .stDownloadButton button, .stButton button {
         border-radius: 6px !important;
         font-weight: 500 !important;
-        letter-spacing: 0.02em !important;
+        border: 1px solid #374151 !important;
+        background-color: #111827 !important;
+        color: #E5E7EB !important;
         transition: all 0.2s ease;
     }
-    .stDownloadButton button:hover {
-        background-color: #3B82F6 !important;
-        color: #F9FAFB !important;
+    .stDownloadButton button:hover, .stButton button:hover {
+        border-color: #3B82F6 !important;
+        color: #3B82F6 !important;
     }
 
-    /* Data Editor Styling (Portfolio Builder) */
     [data-testid="stDataFrame"] {
-        border-radius: 8px !important;
-        overflow: hidden !important;
+        border-radius: 6px !important;
         border: 1px solid #1F2937 !important;
     }
     
-    /* FIN-SIGHT AI FLOATING WIDGET CSS */
+    /* ------------------------------------- */
+    /* FIN-SIGHT AI FLOATING WIDGET CSS      */
+    /* ------------------------------------- */
+    @keyframes pulse-shadow {
+        0% { box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(59, 130, 246, 0.4); }
+        70% { box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 0 10px rgba(59, 130, 246, 0); }
+        100% { box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
     [data-testid="stPopover"] {
         position: fixed !important;
         bottom: 30px !important;
@@ -153,59 +194,64 @@ def inject_premium_css():
         z-index: 999999 !important;
     }
     [data-testid="stPopover"] > button {
-        background: linear-gradient(135deg, #3B82F6 0%, #7F00FF 100%) !important;
+        background-color: #3B82F6 !important;
         color: #FFFFFF !important;
         border-radius: 50% !important;
-        width: 65px !important;
-        height: 65px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 20px rgba(59, 130, 246, 0.4) !important;
+        width: 60px !important;
+        height: 60px !important;
         border: 2px solid rgba(255,255,255,0.1) !important;
         transition: transform 0.2s ease !important;
+        animation: pulse-shadow 2.5s infinite;
     }
     [data-testid="stPopover"] > button:hover {
         transform: scale(1.05) !important;
+        background-color: #2563EB !important;
     }
-    /* Hide the text inside the button to just show emoji if desired, or let it center */
     [data-testid="stPopover"] > button p {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         margin: 0;
         padding: 0;
     }
     
-    /* Chat Bubble Overrides */
-    [data-testid="stChatMessage"] {
-        background-color: #111827 !important;
+    /* Inside the chat bubble popover body - lock background */
+    [data-testid="stPopoverBody"] {
+        background-color: #0A0E17 !important;
         border: 1px solid #1F2937 !important;
-        border-radius: 12px !important;
-        padding: 15px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-        margin-bottom: 5px !important;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
-    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
+    
+    /* Chat Message bubbles */
+    [data-testid="stChatMessage"] {
+        background-color: transparent !important;
+        padding: 10px 0 !important;
+        border: none !important;
+    }
+    [data-testid="chatAvatarIcon-user"] {
         background-color: #3B82F6 !important;
     }
-    [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
-        background-color: #10B981 !important;
+    [data-testid="chatAvatarIcon-assistant"] {
+        background-color: #1F2937 !important;
     }
     
     /* Quick Prompts standard buttons */
     .stButton button[kind="secondary"] {
         border-radius: 20px !important;
-        border: 1px solid #3B82F6 !important;
-        color: #3B82F6 !important;
+        border: 1px solid #374151 !important;
+        color: #9CA3AF !important;
         background-color: transparent !important;
-        padding: 2px 10px !important;
+        padding: 4px 12px !important;
         font-size: 0.8rem !important;
-        transition: all 0.2s ease;
     }
     .stButton button[kind="secondary"]:hover {
-        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: #3B82F6 !important;
+        border-color: #3B82F6 !important;
+        background-color: rgba(59, 130, 246, 0.05) !important;
     }
 
-    /* Custom divider */
     hr {
         border-top: 1px solid #1F2937 !important;
-        margin: 2rem 0;
+        margin: 1.5rem 0;
     }
     </style>
     """

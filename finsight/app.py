@@ -229,10 +229,12 @@ elif page == "Equity Analysis":
                     fig_hist = utils.apply_default_layout(fig_hist, "Statistical Probability Density: Daily Returns")
                     st.plotly_chart(fig_hist, use_container_width=True, config={"displaylogo": False})
                 
-                # Optional Explain Dashboard Button
-                if st.button("Generate Dashboard Summary", icon="📝"):
+                if st.button("Generate Dashboard Summary", icon="📝", use_container_width=True):
                     ext = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
-                    st.info(ext)
+                    with st.container():
+                        st.markdown("<div style='background-color: rgba(17,24,39,0.7); border: 1px solid #1F2937; padding: 24px; border-radius: 8px; margin-top: 15px;'>", unsafe_allow_html=True)
+                        st.markdown(ext)
+                        st.markdown("</div>", unsafe_allow_html=True)
 
 elif page == "Strategy Backtesting":
     st.markdown(f"<h2 style='color: #F9FAFB; margin-bottom: 30px;'>Algorithmic Validator</h2>", unsafe_allow_html=True)
