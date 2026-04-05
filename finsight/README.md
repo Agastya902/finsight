@@ -1,62 +1,64 @@
-# FinSight
+# FinSight Platform
 
-**Explainable Fintech Portfolio Intelligence**
+**Institutional Explainable Portfolio Intelligence**
 
-FinSight is a streamlined MVP web application designed to demonstrate financial data analysis, strategy backtesting, portfolio optimization, and plain-English insights. It transforms complex quantitative results into explainable summaries, catering to financial analysts, fintech product teams, technical sales, and client-facing demonstrations.
+FinSight is a premium analytical SaaS MVP designed for wealth managers, fintech operators, and quantitative product teams. It bridges the gap between mathematically rigorous modeling (MPT, Backtesting) and beautifully rendered, client-ready plain English explainability.
 
-## Key Features
+![FinSight Architecture](https://img.shields.io/badge/Architecture-Modular-blue) ![Fintech](https://img.shields.io/badge/Domain-Fintech-green) ![Streamlit](https://img.shields.io/badge/Frontend-Streamlit_Dark_Mode-red)
 
-- **Stock Analytics**: Dive deep into standard metrics like annualized return, volatility, max drawdown, and moving averages.
-- **Strategy Backtesting**: Compare classical strategies like Moving Average Crossover against Buy and Hold and benchmark indices (e.g., SPY).
-- **Portfolio Optimization**: Allocate capital effectively using scipy.optimize algorithms to find the Maximum Sharpe or Minimum Volatility portfolios among user-selected assets.
-- **Explainable Summaries**: An intelligent rule-based engine that instantly distills the outcomes of charting and optimization into clean, professional, reading-ready English interpretations.
+## Live Demo
+> **[Place link to Streamlit Community Cloud demo here]**
+
+## Platform Capabilities
+
+- **Institutional Micro-Analytics**: Extract and normalize critical financial vectors (Sharpe, Drawdown, Volatility Profiles) with robust fallback handling against Yahoo Finance endpoints.
+- **Algorithmic Strategy Backtesting**: Effortlessly run performance comparisons between traditional buy-and-hold methodologies and dynamic Moving Average cross strategies.
+- **MPT Constraint Solving**: Dynamically optimize highly-concentrated portfolios utilizing SciPy SLSQP optimization against Max Sharpe or Min Volatility manifolds.
+- **Automated Explainability Engine**: Translates highly complex multidimensional market data and volatility metrics into reading-ready analyst commentary suitable for immediate presentation to C-Suite or high-net-worth clients.
+- **Premium Design System**: Injected CSS and heavily modified Plotly interfaces creating a sleek, dark-mode 'Bloomberg Terminal meets modern web' aesthetic.
 
 ## Tech Stack
+- **Compute Layer**: `Python 3`, `NumPy`, `SciPy`
+- **Analytics & Tensors**: `Pandas`, `yfinance`
+- **Visualization**: `Plotly` (Extensively Customized Template)
+- **Frontend Container**: `Streamlit` (with explicit CSS injection for premium product design styling)
 
-- **Language**: Python
-- **Frontend**: Streamlit
-- **Data & Computation**: Pandas, NumPy, yfinance
-- **Optimization**: SciPy
-- **Visualization**: Plotly
+---
 
-## Screenshots
+## Technical Preview
 
-<!-- Note: Add screenshots of Overview, Analytics, Backtesting, and Optimization here -->
-*(Screenshots coming soon)*
+*(Take screenshots of the glassmorphic cards and dark mode charts and place them here)*
+- `docs/landing.jpg`
+- `docs/analytics.jpg`
+- `docs/optimizer.jpg`
 
-## Local Setup Instructions
+## Local Setup & Deployment
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd finsight
-   ```
+1. **Clone & Virtualize**
+```bash
+git clone <repo-url> finsight
+cd finsight
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-2. **Create and activate a virtual environment:**
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+2. **Hydrate Dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. **Ignite the Application**
+```bash
+streamlit run app.py
+```
 
-4. **Run the application:**
-   ```bash
-   streamlit run app.py
-   ```
+## Streamlit Cloud Deployment
+This product is completely ready for one-click deployment via Streamlit Community Cloud. 
+1. Link your public GitHub repository containing this exact folder structure to Streamlit.
+2. Select target main path `app.py`.
+3. Launch! The engine intrinsically loads dependencies defined in `requirements.txt`.
 
-## Deployment Instructions (Streamlit Community Cloud)
-
-1. Push your code to a public GitHub repository.
-2. Go to [Streamlit Community Cloud](https://share.streamlit.io).
-3. Click "New app".
-4. Select the repository, branch (`main`), and main file path (`app.py`).
-5. Click "Deploy". The app will automatically install dependencies from `requirements.txt` and launch.
-
-## Future Improvements
-- **Live Data**: Hook up to live websockets for real-time pricing.
-- **User Portfolios**: Add backend database integration (e.g., PostgreSQL or Firebase) to save user's custom created portfolios.
-- **Advanced Strategies**: Expand to incorporate Mean-Reversion and Machine Learning forecasting based trading algorithms.
+## Future Roadmap
+- Implementation of Kelly Criterion sizing tools.
+- PostgreSQL connector for saving user configuration states.
+- Addition of Mean Reversion ML predictions utilizing Scikit-learn regressors on recent price horizons.
