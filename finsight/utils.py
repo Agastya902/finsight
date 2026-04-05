@@ -17,57 +17,57 @@ COLORS = {
 
 def inject_premium_css():
     """Injects sophisticated, heavily refined CSS for a credible SaaS aesthetic."""
-    css = f"""
+    css = """
     <style>
     /* Global Typography & Background */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
     
-    html, body, [class*="css"]  {{
+    html, body, [class*="css"]  {
         font-family: 'Inter', -apple-system, sans-serif !important;
-        background-color: {COLORS['background']} !important;
-        color: {COLORS['text']} !important;
+        background-color: #0A0E17 !important;
+        color: #F9FAFB !important;
         letter-spacing: -0.01em;
-    }}
+    }
     
     /* Clean up main padding */
-    .block-container {{
+    .block-container {
         padding-top: 2rem !important;
         max-width: 1400px;
-    }}
+    }
     
     /* Refined Metric Cards (No flashy neon, just elegant elevation) */
-    .metric-card {{
-        background-color: {COLORS['panel']};
-        border: 1px solid {COLORS['border']};
+    .metric-card {
+        background-color: #111827;
+        border: 1px solid #1F2937;
         border-radius: 8px;
         padding: 24px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
         transition: transform 0.15s ease-in-out, border-color 0.15s ease-in-out;
         margin-bottom: 1.5rem;
-    }}
-    .metric-card:hover {{
+    }
+    .metric-card:hover {
         border-color: #374151;
         transform: translateY(-1px);
-    }}
-    .metric-title {{
+    }
+    .metric-title {
         font-size: 0.8rem;
-        color: {COLORS['muted_text']};
+        color: #9CA3AF;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 500;
         margin-bottom: 8px;
-    }}
-    .metric-value {{
+    }
+    .metric-value {
         font-size: 1.85rem;
         font-weight: 600;
-        color: {COLORS['text']};
+        color: #F9FAFB;
         margin-bottom: 0px;
-    }}
+    }
     
     /* Elegant Insight / Callout Boxes */
-    .insight-box {{
+    .insight-box {
         background-color: #111827;
-        border-left: 3px solid {COLORS['secondary']};
+        border-left: 3px solid #C5A572;
         padding: 20px 24px;
         margin: 24px 0;
         font-size: 1.05rem;
@@ -76,41 +76,41 @@ def inject_premium_css():
         border-top-right-radius: 6px;
         border-bottom-right-radius: 6px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    }}
-    .insight-label {{
-        color: {COLORS['secondary']};
+    }
+    .insight-label {
+        color: #C5A572;
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin-bottom: 8px;
-    }}
+    }
     
     /* Sophisticated Hero Section */
-    .hero-container {{
+    .hero-container {
         text-align: left;
         padding: 48px 0px 32px 0px;
-        border-bottom: 1px solid {COLORS['border']};
+        border-bottom: 1px solid #1F2937;
         margin-bottom: 40px;
-    }}
-    .hero-title {{
+    }
+    .hero-title {
         font-size: 2.8rem;
         font-weight: 600;
-        color: {COLORS['text']};
+        color: #F9FAFB;
         margin-bottom: 16px;
-    }}
-    .hero-subtitle {{
+    }
+    .hero-subtitle {
         font-size: 1.2rem;
-        color: {COLORS['muted_text']};
+        color: #9CA3AF;
         font-weight: 300;
         line-height: 1.6;
         max-width: 800px;
-    }}
+    }
     
     /* Streamlit Sidebar Polish */
-    [data-testid="stSidebar"] {
-        background-color: var(--sidebar-bg, #0A0E17) !important;
-        border-right: 1px solid var(--border-color, #1F2937);
+    section[data-testid="stSidebar"] {
+        background-color: #0A0E17 !important;
+        border-right: 1px solid #1F2937 !important;
     }
     [data-testid="stSidebarNav"] {
         display: none;
