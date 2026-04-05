@@ -26,7 +26,7 @@ def summarize_strategy_comparison(strat_ret: float, buy_hold_ret: float, strat_d
     if strat_dd > buy_hold_dd:
         summary += f"Importantly, the algorithmic model successfully reduced tail risk, limiting the maximum drawdown to **{strat_dd*100:.2f}%** (better than the baseline **{buy_hold_dd*100:.2f}%** loss)."
     else:
-        summary += f"Furthermore, the strategy strategy failed to provide downside protection, resulting in a steeper maximum drawdown (**{strat_dd*100:.2f}%**) than simply holding the underlying asset (**{buy_hold_dd*100:.2f}%**)."
+        summary += f"Furthermore, the strategy failed to provide downside protection, resulting in a steeper maximum drawdown (**{strat_dd*100:.2f}%**) than simply holding the underlying asset (**{buy_hold_dd*100:.2f}%**)."
         
     return summary
 
