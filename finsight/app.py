@@ -83,24 +83,181 @@ st.sidebar.markdown("""
 # ══════════════════════════════════════════
 
 if page_key == "overview":
+
+    # ── Hero ──
     st.markdown("""
     <div class="hero-container">
-        <div class="hero-title">Explainable Portfolio Intelligence</div>
+        <div style="font-size:0.7rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.1em; font-weight:600; margin-bottom:10px;">Portfolio Intelligence Platform</div>
+        <div class="hero-title">Understand your investments.<br>Make smarter decisions.</div>
         <div class="hero-subtitle">
-            FinSight helps you analyze assets, compare strategies, build portfolios, and understand outcomes — all in one place.
+            Analyze any public equity, backtest trading strategies, optimize multi-asset portfolios,
+            and get plain-English explanations — all powered by real market data.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        utils.render_metric_card("Equity Analysis", "Deep-dive into any public asset with benchmark comparisons, moving averages, and risk metrics.")
-    with c2:
-        utils.render_metric_card("Strategy Backtest", "Test moving-average crossover strategies against simple buy-and-hold to evaluate alpha generation.")
-    with c3:
-        utils.render_metric_card("Portfolio Builder", "Construct multi-asset portfolios, optimize weights via Markowitz, and visualize the efficient frontier.")
+    # ── Live Market Pulse ──
+    pulse_tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
+    with st.spinner("Fetching live market data..."):
+        end_d = datetime.today().date()
+        start_30 = (datetime.today() - relativedelta(days=35)).date()
+        start_1y = (datetime.today() - relativedelta(years=1)).date()
+        pulse_data = data_loader.fetch_stock_data(pulse_tickers, start_30, end_d)
+        sparkline_data = data_loader.fetch_stock_data(pulse_tickers, start_1y, end_d)
 
-    st.session_state['ai_context'] = {'asset': 'N/A', 'horizon': 'N/A'}
+    if not pulse_data.empty:
+        st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; margin-top:4px;'>Market Pulse — Live</div>", unsafe_allow_html=True)
+        cols = st.columns(len(pulse_tickers))
+        for i, tk in enumerate(pulse_tickers):
+            if tk in pulse_data.columns and len(pulse_data[tk].dropna()) >= 2:
+                latest = pulse_data[tk].dropna().iloc[-1]
+                prev = pulse_data[tk].dropna().iloc[-2]
+                change_pct = ((latest - prev) / prev) * 100
+                color = "#10B981" if change_pct >= 0 else "#EF4444"
+                arrow = "▲" if change_pct >= 0 else "▼"
+                with cols[i]:
+                    st.markdown(f"""
+                    <div style="background:#111827; border:1px solid #1F2937; border-radius:6px; padding:14px 16px; text-align:center;">
+                        <div style="font-size:0.7rem; color:#6B7280; font-weight:500; letter-spacing:0.04em;">{tk}</div>
+                        <div style="font-size:1.3rem; font-weight:600; color:#F9FAFB; margin:4px 0;">${latest:,.2f}</div>
+                        <div style="font-size:0.8rem; color:{color}; font-weight:500;">{arrow} {abs(change_pct):.2f}%</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+
+    # ── Quick Start Search ──
+    st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;'>Quick Start — Search any asset</div>", unsafe_allow_html=True)
+    qs_col1, qs_col2 = st.columns([3, 1])
+    with qs_col1:
+        quick_asset = st.selectbox("Search", options=list(universe.EQUITY_UNIVERSE.keys()), index=0, label_visibility="collapsed", key="qs_search")
+    with qs_col2:
+        if st.button("Analyze →", use_container_width=True, key="qs_go"):
+            st.session_state['quick_ticker'] = universe.extract_ticker(quick_asset, universe.EQUITY_UNIVERSE)
+            st.info(f"Navigate to **Equity Intelligence** in the sidebar to analyze {universe.extract_ticker(quick_asset, universe.EQUITY_UNIVERSE)}.")
+
+    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+
+    # ── Sparkline Feature Cards ──
+    st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;'>What You Can Do</div>", unsafe_allow_html=True)
+
+    fc1, fc2, fc3 = st.columns(3)
+
+    with fc1:
+        st.markdown("""
+        <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:20px 20px 12px 20px;">
+            <div style="font-size:1.4rem; margin-bottom:8px;">📈</div>
+            <div style="font-size:0.95rem; font-weight:600; color:#F9FAFB; margin-bottom:6px;">Equity Intelligence</div>
+            <div style="font-size:0.82rem; color:#9CA3AF; line-height:1.45;">
+                Analyze returns, volatility, Sharpe ratios, and drawdowns for any public asset — benchmarked against SPY, QQQ, or a custom index.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        # Mini sparkline
+        if not sparkline_data.empty and "AAPL" in sparkline_data.columns:
+            spark_fig = go.Figure()
+            spark_series = sparkline_data["AAPL"].dropna()
+            spark_color = "#10B981" if spark_series.iloc[-1] >= spark_series.iloc[0] else "#EF4444"
+            spark_fig.add_trace(go.Scatter(x=spark_series.index, y=spark_series, mode='lines',
+                line=dict(color=spark_color, width=1.5), fill='tozeroy',
+                fillcolor=spark_color.replace(")", ",0.05)").replace("rgb", "rgba") if "rgb" in spark_color else f"rgba{tuple(int(spark_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.05,)}",
+                hoverinfo='skip'))
+            spark_fig.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=70,
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                xaxis=dict(visible=False), yaxis=dict(visible=False))
+            st.plotly_chart(spark_fig, use_container_width=True, config={"displayModeBar": False})
+
+    with fc2:
+        st.markdown("""
+        <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:20px 20px 12px 20px;">
+            <div style="font-size:1.4rem; margin-bottom:8px;">⚡</div>
+            <div style="font-size:0.95rem; font-weight:600; color:#F9FAFB; margin-bottom:6px;">Strategy Backtesting</div>
+            <div style="font-size:0.82rem; color:#9CA3AF; line-height:1.45;">
+                Run moving-average crossover strategies against passive buy-and-hold. Compare cumulative returns and maximum drawdown side-by-side.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if not sparkline_data.empty and "MSFT" in sparkline_data.columns:
+            spark_fig2 = go.Figure()
+            s2 = sparkline_data["MSFT"].dropna()
+            sc2 = "#10B981" if s2.iloc[-1] >= s2.iloc[0] else "#EF4444"
+            spark_fig2.add_trace(go.Scatter(x=s2.index, y=s2, mode='lines',
+                line=dict(color=sc2, width=1.5), fill='tozeroy',
+                fillcolor=f"rgba{tuple(int(sc2.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.05,)}",
+                hoverinfo='skip'))
+            spark_fig2.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=70,
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                xaxis=dict(visible=False), yaxis=dict(visible=False))
+            st.plotly_chart(spark_fig2, use_container_width=True, config={"displayModeBar": False})
+
+    with fc3:
+        st.markdown("""
+        <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:20px 20px 12px 20px;">
+            <div style="font-size:1.4rem; margin-bottom:8px;">🔬</div>
+            <div style="font-size:0.95rem; font-weight:600; color:#F9FAFB; margin-bottom:6px;">Portfolio Optimization</div>
+            <div style="font-size:0.82rem; color:#9CA3AF; line-height:1.45;">
+                Build multi-asset portfolios, assign custom weights or auto-optimize via Max Sharpe / Min Volatility, and visualize the efficient frontier.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        if not sparkline_data.empty and "GOOGL" in sparkline_data.columns:
+            spark_fig3 = go.Figure()
+            s3 = sparkline_data["GOOGL"].dropna()
+            sc3 = "#10B981" if s3.iloc[-1] >= s3.iloc[0] else "#EF4444"
+            spark_fig3.add_trace(go.Scatter(x=s3.index, y=s3, mode='lines',
+                line=dict(color=sc3, width=1.5), fill='tozeroy',
+                fillcolor=f"rgba{tuple(int(sc3.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (0.05,)}",
+                hoverinfo='skip'))
+            spark_fig3.update_layout(margin=dict(l=0,r=0,t=0,b=0), height=70,
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                xaxis=dict(visible=False), yaxis=dict(visible=False))
+            st.plotly_chart(spark_fig3, use_container_width=True, config={"displayModeBar": False})
+
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+    # ── How It Works ──
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;'>How It Works</div>", unsafe_allow_html=True)
+
+    hw1, hw2, hw3, hw4 = st.columns(4)
+    steps = [
+        ("1", "Select an asset", "Choose from 40+ major equities or type any ticker symbol."),
+        ("2", "Pick your lens", "Analyze performance, test strategies, or build a portfolio."),
+        ("3", "Read the analysis", "Get institutional-grade metrics with plain-English explanations."),
+        ("4", "Ask Copilot", "Use the AI assistant to dig deeper into any result on screen."),
+    ]
+    for col, (num, title, desc) in zip([hw1, hw2, hw3, hw4], steps):
+        with col:
+            st.markdown(f"""
+            <div style="text-align:center; padding:12px 8px;">
+                <div style="width:36px; height:36px; border-radius:50%; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2);
+                            display:inline-flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:600; color:#3B82F6; margin-bottom:10px;">{num}</div>
+                <div style="font-size:0.88rem; font-weight:500; color:#F9FAFB; margin-bottom:4px;">{title}</div>
+                <div style="font-size:0.78rem; color:#6B7280; line-height:1.4;">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ── Platform Stats ──
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+    s1, s2, s3, s4 = st.columns(4)
+    stat_items = [
+        ("40+", "Tracked Assets"),
+        ("5", "Index Benchmarks"),
+        ("2", "Optimization Modes"),
+        ("Real-time", "Yahoo Finance Data"),
+    ]
+    for col, (val, label) in zip([s1, s2, s3, s4], stat_items):
+        with col:
+            st.markdown(f"""
+            <div style="text-align:center; padding:16px 0;">
+                <div style="font-size:1.5rem; font-weight:700; color:#F9FAFB;">{val}</div>
+                <div style="font-size:0.7rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.04em; margin-top:2px;">{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.session_state['ai_context'] = {'asset': 'the platform overview', 'horizon': 'N/A'}
 
 
 elif page_key == "equity":
