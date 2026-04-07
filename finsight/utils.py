@@ -33,69 +33,91 @@ def inject_premium_css():
         max-width: 1400px;
     }
 
-    /* ── Fixed App Shell (Sidebar) ── */
-    section[data-testid="stSidebar"] {
-        background-color: #0A0E17 !important;
-        border-right: 1px solid #1F2937 !important;
-        min-width: 260px !important;
-        max-width: 260px !important;
-        width: 260px !important;
-        top: 32px !important; /* Start below the ticker tape */
-        height: calc(100vh - 32px) !important;
-        z-index: 999 !important;
-    }
-    /* Hide the collapse button so it never looks collapsible */
+    /* ── Hide Left Sidebar completely ── */
+    section[data-testid="stSidebar"],
     button[data-testid="stSidebarCollapseButton"],
     [data-testid="collapsedControl"] {
         display: none !important;
         visibility: hidden !important;
-    }
-    [data-testid="stSidebarNav"] {
-        display: none;
+        width: 0 !important;
     }
 
-    /* ── Navigation: Hide only the radio dot, keep labels visible ── */
-    [data-testid="stSidebar"] [role="radiogroup"] {
-        gap: 2px !important;
+    /* ── Top Navigation Rail (Horizontal Radio) ── */
+    .top-nav-container {
+        border-bottom: 1px solid #1F2937;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    /* Hide only the small circular radio input dot */
-    [data-testid="stSidebar"] [role="radiogroup"] input[type="radio"] {
+    
+    /* Target the horizontal radio group used for nav */
+    .top-nav-container [role="radiogroup"] {
+        gap: 12px !important;
+        flex-direction: row !important;
+    }
+    
+    /* Hide the radio input circles */
+    .top-nav-container [role="radiogroup"] input[type="radio"] {
         display: none !important;
     }
-    [data-testid="stSidebar"] [role="radiogroup"] [data-testid="stMarkdown"] {
-        /* keep labels visible */
-    }
-    /* Style each radio option as a full-width nav item */
-    [data-testid="stSidebar"] [role="radiogroup"] label {
-        display: flex !important;
+    
+    /* Style the labels as navigation tabs */
+    .top-nav-container [role="radiogroup"] label {
+        display: inline-flex !important;
         align-items: center !important;
-        width: 100% !important;
-        padding: 11px 16px !important;
-        margin: 1px 0 !important;
+        justify-content: center !important;
+        padding: 8px 16px !important;
+        background-color: transparent !important;
         border-radius: 6px;
         cursor: pointer;
         color: #9CA3AF;
-        font-size: 0.88rem;
-        font-weight: 400;
-        transition: background-color 0.15s ease, color 0.15s ease;
-        border-left: 2px solid transparent;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid transparent;
     }
-    [data-testid="stSidebar"] [role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.04);
-        color: #E5E7EB;
+    
+    .top-nav-container [role="radiogroup"] label:hover {
+        background-color: rgba(255,255,255,0.04) !important;
+        color: #F9FAFB !important;
+        transform: translateY(-1px);
     }
-    /* Active nav item */
-    [data-testid="stSidebar"] [role="radiogroup"] [aria-checked="true"] label {
-        background-color: rgba(59, 130, 246, 0.08) !important;
+    
+    /* Active Nav Tab */
+    .top-nav-container [role="radiogroup"] [aria-checked="true"] label {
+        background-color: rgba(59, 130, 246, 0.1) !important;
         color: #3B82F6 !important;
-        font-weight: 500 !important;
-        border-left: 2px solid #3B82F6 !important;
-        border-radius: 0 6px 6px 0;
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
     }
-    /* Clean up baseweb radio wrapper */
-    [data-testid="stSidebar"] [data-baseweb="radio"] {
-        margin-bottom: 0 !important;
+    
+    /* Clean up baseweb radio background */
+    .top-nav-container [data-baseweb="radio"] {
         background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* ── Global Interactive Animations ── */
+    /* Metric Cards Hover */
+    [data-testid="stMetric"] {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    }
+    
+    /* Generic Buttons Hover */
+    .stButton>button {
+        transition: all 0.2s ease-in-out !important;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
     }
 
     /* ── Metric Cards ── */

@@ -15,7 +15,7 @@ import universe
 import ai_copilot
 
 # ── Page Config ──
-st.set_page_config(page_title="FinSight", page_icon="◆", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="FinSight", page_icon="◆", layout="wide", initial_sidebar_state="collapsed")
 utils.inject_premium_css()
 
 # ── Session State ──
@@ -77,42 +77,33 @@ def inline_fin_analysis(page_id, base_commentary, questions):
                     st.session_state[history_key].append((btn_label, ans))
                     st.rerun()
 
-# ── Sidebar Navigation Shell ──
-st.sidebar.markdown("""
-<div style='padding: 12px 0 18px 0; border-bottom: 1px solid #1F2937; margin-bottom: 20px;'>
-    <div style='display:flex; align-items:center; gap:8px;'>
-        <div style='width:28px; height:28px; border-radius:6px; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.85rem; color:#fff; font-weight:700;'>F</div>
-        <div>
-            <div style='font-size:1.05rem; font-weight:600; color:#F9FAFB; letter-spacing:-0.02em;'>FinSight</div>
-        </div>
+# ── Top Navigation Rail ──
+st.markdown("<div class='top-nav-container'>", unsafe_allow_html=True)
+nav_col1, nav_col2, nav_col3 = st.columns([1.5, 5, 1])
+
+with nav_col1:
+    st.markdown("""
+    <div style='display:flex; align-items:center; gap:8px; height:100%; margin-top:2px;'>
+        <div style='width:24px; height:24px; border-radius:6px; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.8rem; color:#fff; font-weight:700;'>F</div>
+        <div style='font-size:1.05rem; font-weight:600; color:#F9FAFB; letter-spacing:-0.02em;'>FinSight</div>
     </div>
-    <div style='font-size:0.6rem; color:#4B5563; margin-top:6px; letter-spacing:0.06em; text-transform:uppercase;'>Portfolio Intelligence</div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-NAV = {
-    "📊  Platform Overview": "overview",
-    "📈  Equity Intelligence": "equity",
-    "🧠  Algorithmic Validator": "strategy",
-    "⚖️  Portfolio Builder": "portfolio",
-}
-page = st.sidebar.radio("Navigation", list(NAV.keys()), index=0, label_visibility="collapsed")
-page_key = NAV[page]
+with nav_col2:
+    NAV = {
+        "Platform Overview": "overview",
+        "Equity Intelligence": "equity",
+        "Algorithmic Validator": "strategy",
+        "Portfolio Builder": "portfolio",
+    }
+    # Horizontal Radio acting as tabs
+    page = st.radio("Navigation", list(NAV.keys()), index=0, horizontal=True, label_visibility="collapsed")
+    page_key = NAV[page]
 
-st.sidebar.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-st.sidebar.markdown("<div style='font-size:0.6rem; color:#4B5563; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px;'>View</div>", unsafe_allow_html=True)
-mode = st.sidebar.selectbox("mode", ["Summary", "Detailed"], label_visibility="collapsed")
+with nav_col3:
+    mode = st.selectbox("mode", ["Summary", "Detailed"], label_visibility="collapsed")
 
-st.sidebar.markdown("""
-<div style='position:absolute; bottom:16px; left:16px; right:16px;'>
-    <div style='border-top:1px solid #1F2937; padding-top:10px;'>
-        <div style='font-size:0.6rem; color:#374151; line-height:1.4;'>FinSight v2.1<br>Powered by Fin AI · Not investment advice</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-
-
+st.markdown("</div>", unsafe_allow_html=True)
 # ══════════════════════════════════════════
 # GLOBAL TICKER TAPE (all pages)
 # ══════════════════════════════════════════
