@@ -15,6 +15,7 @@ FinSight is a premium analytical SaaS MVP designed for wealth managers, fintech 
 - **Algorithmic Strategy Backtesting**: Effortlessly run performance comparisons between traditional buy-and-hold methodologies and dynamic Moving Average cross strategies.
 - **MPT Constraint Solving**: Dynamically optimize highly-concentrated portfolios utilizing SciPy SLSQP optimization against Max Sharpe or Min Volatility manifolds.
 - **Automated Explainability Engine**: Translates highly complex multidimensional market data and volatility metrics into reading-ready analyst commentary suitable for immediate presentation to C-Suite or high-net-worth clients.
+- **Research Report Export**: Generate and download professional PDF, HTML, and CSV research reports with automated executive summaries and key performance indicators.
 - **Premium Design System**: Injected CSS and heavily modified Plotly interfaces creating a sleek, dark-mode 'Bloomberg Terminal meets modern web' aesthetic.
 
 ## Tech Stack

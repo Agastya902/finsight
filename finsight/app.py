@@ -13,6 +13,7 @@ import optimizer
 import utils
 import universe
 import ai_copilot
+import reporting
 
 # ── Page Config ──
 st.set_page_config(page_title="FinSight", page_icon="◆", layout="wide", initial_sidebar_state="collapsed")
@@ -25,6 +26,10 @@ if 'chat_history' not in st.session_state:
     ]
 if 'ai_context' not in st.session_state:
     st.session_state['ai_context'] = {}
+if 'last_report' not in st.session_state:
+    st.session_state['last_report'] = None
+if 'show_report_preview' not in st.session_state:
+    st.session_state['show_report_preview'] = False
 
 # ── Time Horizon Helpers ──
 def get_horizon_dates(horizon: str):
@@ -76,6 +81,38 @@ def inline_fin_analysis(page_id, base_commentary, questions):
                     ans = ai_copilot.generate_response(prompt, st.session_state['ai_context'])
                     st.session_state[history_key].append((btn_label, ans))
                     st.rerun()
+
+def trigger_report_generation(state):
+    """Triggers report building and stores in session state."""
+    with st.spinner("Compiling institutional report..."):
+        artifact = reporting.create_report_artifact(state)
+        st.session_state['last_report'] = artifact
+        st.session_state['show_report_preview'] = True
+
+def display_report_preview():
+    """Renders the in-app report preview and download buttons."""
+    if st.session_state['last_report'] and st.session_state['show_report_preview']:
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;'>"
+                    "<div style='font-size:1.1rem; font-weight:600; color:#F9FAFB;'>Research Report Preview</div>"
+                    "</div>", unsafe_allow_html=True)
+        
+        artifact = st.session_state['last_report']
+        
+        # Download buttons
+        b1, b2, b3, b4 = st.columns([1,1,1,2])
+        b1.download_button("Download HTML", data=artifact.html, file_name=f"{artifact.filename_base}.html", mime="text/html", use_container_width=True)
+        b2.download_button("Download PDF", data=artifact.pdf, file_name=f"{artifact.filename_base}.pdf", mime="application/pdf", use_container_width=True)
+        b3.download_button("Download CSV", data=artifact.csv, file_name=f"{artifact.filename_base}.csv", mime="text/csv", use_container_width=True)
+        if b4.button("Close Preview", use_container_width=True):
+            st.session_state['show_report_preview'] = False
+            st.rerun()
+            
+        # Preview
+        st.markdown("<div style='background:white; border-radius:8px; overflow:hidden;'>"
+                    f"{artifact.html}"
+                    "</div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
 
 # ── Top Navigation Rail ──
 st.markdown("<div class='top-nav-container'>", unsafe_allow_html=True)
@@ -319,7 +356,27 @@ elif page_key == "equity":
                 if benchmark in data.columns:
                     bench_ret = metrics.calculate_annualized_return(metrics.calculate_daily_returns(data[benchmark]))
 
-                # Context for copilot
+                # ── Action Toolbar ──
+                rep_c1, rep_c2 = st.columns([5, 1])
+                with rep_c2:
+                    if st.button("Generate Report", use_container_width=True, key="btn_rep_eq"):
+                        rep_state = reporting.ReportState(
+                            page_type="equity",
+                            tickers=[ticker],
+                            benchmark=benchmark,
+                            start_date=str(start_date),
+                            end_date=str(end_date),
+                            metrics={
+                                "Annualized_Return": f"{ann_ret*100:+.2f}%",
+                                "Volatility": f"{ann_vol*100:.2f}%",
+                                "Sharpe_Ratio": f"{sharpe:.2f}",
+                                "Max_Drawdown": f"{max_dd*100:.2f}%"
+                            }
+                        )
+                        trigger_report_generation(rep_state)
+                
+                display_report_preview()
+
                 st.session_state['ai_context'] = {
                     'asset': ticker, 'benchmark': benchmark,
                     'horizon': 'the selected period',
@@ -413,6 +470,32 @@ elif page_key == "strategy":
                 bh_dd = metrics.calculate_max_drawdown(prices)
                 st_ann = metrics.calculate_annualized_return(strat_ret)
                 st_dd = metrics.calculate_max_drawdown(strat_df['Strategy_Cum_Ret'])
+
+                # ── Action Toolbar ──
+                rep_c1, rep_c2 = st.columns([5, 1])
+                with rep_c2:
+                    if st.button("Generate Report", use_container_width=True, key="btn_rep_st"):
+                        rep_state = reporting.ReportState(
+                            page_type="strategy",
+                            tickers=[ticker],
+                            start_date=str(start_date),
+                            end_date=str(end_date),
+                            settings={"Short_Window": short_window, "Long_Window": long_window},
+                            metrics={
+                                "Strategy_Return": f"{st_ann*100:+.2f}%",
+                                "Buy_Hold_Return": f"{bh_ann*100:+.2f}%",
+                                "Strategy_Drawdown": f"{st_dd*100:.2f}%",
+                                "Buy_Hold_Drawdown": f"{bh_dd*100:.2f}%"
+                            },
+                            tables={'comparison': pd.DataFrame({
+                                'Metric': ['Annual Return', 'Max Drawdown'],
+                                'Strategy': [f"{st_ann*100:.2f}%", f"{st_dd*100:.2f}%"],
+                                'Buy & Hold': [f"{bh_ann*100:.2f}%", f"{bh_dd*100:.2f}%"]
+                            })}
+                        )
+                        trigger_report_generation(rep_state)
+                
+                display_report_preview()
 
                 st.session_state['ai_context'] = {
                     'asset': ticker, 'horizon': 'the backtest period',
@@ -522,6 +605,25 @@ elif page_key == "portfolio":
             'sharpe': f"{sh:.2f}", 'ann_ret': f"{ret*100:+.2f}%",
             'vol': f"{vol*100:.2f}%", 'max_dd': 'N/A'
         }
+
+        # ── Action Toolbar ──
+        rep_c1, rep_c2 = st.columns([5, 1])
+        with rep_c2:
+            if st.button("Generate Report", use_container_width=True, key="btn_rep_pf"):
+                rep_state = reporting.ReportState(
+                    page_type="portfolio",
+                    tickers=valid,
+                    start_date="the selected period",
+                    metrics={
+                        "Expected_Annual_Return": f"{ret*100:+.2f}%",
+                        "Projected_Volatility": f"{vol*100:.2f}%",
+                        "Portfolio_Sharpe": f"{sh:.2f}"
+                    },
+                    tables={'weights': pd.DataFrame({"Asset": valid, "Weight": final_w})}
+                )
+                trigger_report_generation(rep_state)
+        
+        display_report_preview()
 
         k1, k2, k3 = st.columns(3)
         with k1: utils.render_metric_card("Expected Return", f"{ret*100:.2f}%")

@@ -4,3 +4,5 @@ numpy
 plotly
 yfinance
 scipy
+fpdf2
+kaleido
