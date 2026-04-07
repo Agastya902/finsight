@@ -427,6 +427,15 @@ def render_metric_card(title: str, value: str, subtext: str = None):
     """, unsafe_allow_html=True)
 
 def render_insight_box(content: str):
+    """Safely renders the analyst note with defensive type checking."""
+    if content is None:
+        content = "Analysis results pending..."
+    elif not isinstance(content, str):
+        content = str(content)
+    
+    if not content.strip():
+        content = "Analysis results pending..."
+
     st.markdown(f"""
         <div class="insight-box">
             <div class="insight-label">Analyst Note</div>

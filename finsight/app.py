@@ -394,6 +394,9 @@ elif page_key == "equity":
                 with k3: utils.render_metric_card("Max Drawdown", f"{max_dd*100:.2f}%")
                 with k4: utils.render_metric_card("Sharpe Ratio", f"{sharpe:.2f}")
 
+                # ── Analyst Note ──
+                commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
+                if not commentary: commentary = "Run the analysis to generate an analyst note."
                 utils.render_insight_box(commentary)
 
                 # ── Chart Controls ──
@@ -499,6 +502,9 @@ elif page_key == "strategy":
                 with m1: utils.render_metric_card("Buy & Hold Return", f"{bh_ann*100:.2f}%", f"Max drawdown: {bh_dd*100:.2f}%")
                 with m2: utils.render_metric_card(f"MA {short_window}/{long_window} Return", f"{st_ann*100:.2f}%", f"Max drawdown: {st_dd*100:.2f}%")
 
+                # ── Analyst Note ──
+                commentary = explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd)
+                if not commentary: commentary = "Run the analysis to generate an analyst note."
                 utils.render_insight_box(commentary)
 
                 fig = go.Figure()
@@ -573,6 +579,9 @@ elif page_key == "portfolio":
             full = optimizer.optimize_portfolio(prices, "Max Sharpe")
             frontier = full["frontier"]
 
+        # ── Analyst Note ──
+        commentary = explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom")
+        if not commentary: commentary = "Run the analysis to generate an analyst note."
         utils.render_insight_box(commentary)
 
         st.session_state['ai_context'] = {
