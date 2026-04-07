@@ -254,9 +254,98 @@ def inject_premium_css():
         border-top: 1px solid #1F2937 !important;
         margin: 1.2rem 0;
     }
+
+    /* ── Scrolling Ticker Tape ── */
+    @keyframes ticker-scroll {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .ticker-tape-wrap {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 99999;
+        height: 32px;
+        background: rgba(10, 14, 23, 0.85);
+        border-bottom: 1px solid #1F2937;
+        overflow: hidden;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    .ticker-tape-track {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        white-space: nowrap;
+        animation: ticker-scroll 45s linear infinite;
+        will-change: transform;
+    }
+    .ticker-tape-track:hover {
+        animation-play-state: paused;
+    }
+    .ticker-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 20px;
+        font-size: 0.7rem;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.02em;
+    }
+    .ticker-item .tk-sym {
+        color: #6B7280;
+        font-weight: 500;
+    }
+    .ticker-item .tk-price {
+        color: #9CA3AF;
+        font-weight: 400;
+    }
+    .ticker-item .tk-chg-up {
+        color: #10B981;
+        font-weight: 500;
+    }
+    .ticker-item .tk-chg-dn {
+        color: #EF4444;
+        font-weight: 500;
+    }
+    .ticker-sep {
+        color: #1F2937;
+        padding: 0 4px;
+        font-size: 0.5rem;
+    }
+    /* Push page content below the fixed tape */
+    .block-container {
+        padding-top: 2.8rem !important;
+    }
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
+
+
+def render_ticker_tape(tape_data: dict):
+    """Renders a scrolling stock-exchange-style ticker tape fixed at the top of the viewport.
+    tape_data: dict of {ticker_symbol: (latest_price, change_pct)}
+    """
+    if not tape_data:
+        return
+
+    items_html = ""
+    for sym, (price, chg) in tape_data.items():
+        arrow = "▲" if chg >= 0 else "▼"
+        chg_class = "tk-chg-up" if chg >= 0 else "tk-chg-dn"
+        items_html += f'<span class="ticker-item"><span class="tk-sym">{sym}</span><span class="tk-price">${price:,.2f}</span><span class="{chg_class}">{arrow}{abs(chg):.2f}%</span></span><span class="ticker-sep">·</span>'
+
+    # Duplicate the strip so the loop is seamless
+    full_html = f"""
+    <div class="ticker-tape-wrap">
+        <div class="ticker-tape-track">
+            {items_html}
+            {items_html}
+        </div>
+    </div>
+    """
+    st.markdown(full_html, unsafe_allow_html=True)
 
 # ── Reusable UI Components ──
 

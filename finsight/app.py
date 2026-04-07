@@ -21,7 +21,7 @@ utils.inject_premium_css()
 # ── Session State ──
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = [
-        {"role": "assistant", "content": "Welcome to FinSight Copilot. Ask me about any metric, chart, or portfolio on screen."}
+        {"role": "assistant", "content": "Hi, I'm Fin! I'm your personal AI analyst. I can explain any metric, analyze trends, or help you build a portfolio."}
     ]
 if 'ai_context' not in st.session_state:
     st.session_state['ai_context'] = {}
@@ -49,9 +49,14 @@ def csv_download(df, filename, label="Export CSV"):
 
 # ── Sidebar Navigation Shell ──
 st.sidebar.markdown("""
-<div style='padding: 8px 0 20px 0; border-bottom: 1px solid #1F2937; margin-bottom: 16px;'>
-    <div style='font-size: 1.2rem; font-weight: 600; color: #F9FAFB; letter-spacing: -0.02em;'>◆ FinSight</div>
-    <div style='font-size: 0.7rem; color: #6B7280; margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase;'>Portfolio Intelligence</div>
+<div style='padding: 12px 0 18px 0; border-bottom: 1px solid #1F2937; margin-bottom: 20px;'>
+    <div style='display:flex; align-items:center; gap:8px;'>
+        <div style='width:28px; height:28px; border-radius:6px; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.85rem; color:#fff; font-weight:700;'>F</div>
+        <div>
+            <div style='font-size:1.05rem; font-weight:600; color:#F9FAFB; letter-spacing:-0.02em;'>FinSight</div>
+        </div>
+    </div>
+    <div style='font-size:0.6rem; color:#4B5563; margin-top:6px; letter-spacing:0.06em; text-transform:uppercase;'>Portfolio Intelligence</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -64,19 +69,35 @@ NAV = {
 page = st.sidebar.radio("Navigation", list(NAV.keys()), index=0, label_visibility="collapsed")
 page_key = NAV[page]
 
-st.sidebar.markdown("<div style='height: 24px'></div>", unsafe_allow_html=True)
-st.sidebar.markdown("""
-<div style='font-size: 0.65rem; color: #4B5563; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px;'>View Mode</div>
-""", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='font-size:0.6rem; color:#4B5563; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px;'>View</div>", unsafe_allow_html=True)
 mode = st.sidebar.selectbox("mode", ["Summary", "Detailed"], label_visibility="collapsed")
 
 st.sidebar.markdown("""
-<div style='position: absolute; bottom: 16px; left: 16px; right: 16px;'>
-    <hr style='border-color: #1F2937; margin-bottom: 10px;'>
-    <div style='font-size: 0.65rem; color: #4B5563; line-height: 1.4;'>FinSight v2.1 · Not investment advice</div>
+<div style='position:absolute; bottom:16px; left:16px; right:16px;'>
+    <div style='border-top:1px solid #1F2937; padding-top:10px;'>
+        <div style='font-size:0.6rem; color:#374151; line-height:1.4;'>FinSight v2.1<br>Powered by Fin AI · Not investment advice</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
+
+
+# ══════════════════════════════════════════
+# GLOBAL TICKER TAPE (all pages)
+# ══════════════════════════════════════════
+TAPE_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "JNJ", "XOM", "WMT", "DIS", "NFLX", "AMD"]
+_tape_end = datetime.today().date()
+_tape_start = (datetime.today() - relativedelta(days=10)).date()
+_tape_prices = data_loader.fetch_stock_data(TAPE_TICKERS, _tape_start, _tape_end)
+_tape_dict = {}
+if not _tape_prices.empty:
+    for tk in TAPE_TICKERS:
+        if tk in _tape_prices.columns:
+            col = _tape_prices[tk].dropna()
+            if len(col) >= 2:
+                _tape_dict[tk] = (col.iloc[-1], ((col.iloc[-1] - col.iloc[-2]) / col.iloc[-2]) * 100)
+utils.render_ticker_tape(_tape_dict)
 
 # ══════════════════════════════════════════
 # PAGES
@@ -96,35 +117,10 @@ if page_key == "overview":
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Live Market Pulse ──
-    pulse_tickers = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]
-    with st.spinner("Fetching live market data..."):
-        end_d = datetime.today().date()
-        start_30 = (datetime.today() - relativedelta(days=35)).date()
-        start_1y = (datetime.today() - relativedelta(years=1)).date()
-        pulse_data = data_loader.fetch_stock_data(pulse_tickers, start_30, end_d)
-        sparkline_data = data_loader.fetch_stock_data(pulse_tickers, start_1y, end_d)
-
-    if not pulse_data.empty:
-        st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; margin-top:4px;'>Market Pulse — Live</div>", unsafe_allow_html=True)
-        cols = st.columns(len(pulse_tickers))
-        for i, tk in enumerate(pulse_tickers):
-            if tk in pulse_data.columns and len(pulse_data[tk].dropna()) >= 2:
-                latest = pulse_data[tk].dropna().iloc[-1]
-                prev = pulse_data[tk].dropna().iloc[-2]
-                change_pct = ((latest - prev) / prev) * 100
-                color = "#10B981" if change_pct >= 0 else "#EF4444"
-                arrow = "▲" if change_pct >= 0 else "▼"
-                with cols[i]:
-                    st.markdown(f"""
-                    <div style="background:#111827; border:1px solid #1F2937; border-radius:6px; padding:14px 16px; text-align:center;">
-                        <div style="font-size:0.7rem; color:#6B7280; font-weight:500; letter-spacing:0.04em;">{tk}</div>
-                        <div style="font-size:1.3rem; font-weight:600; color:#F9FAFB; margin:4px 0;">${latest:,.2f}</div>
-                        <div style="font-size:0.8rem; color:{color}; font-weight:500;">{arrow} {abs(change_pct):.2f}%</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+    # ── Sparkline data for feature cards ──
+    _spark_tickers = ["AAPL", "MSFT", "GOOGL"]
+    _spark_start = (datetime.today() - relativedelta(years=1)).date()
+    sparkline_data = data_loader.fetch_stock_data(_spark_tickers, _spark_start, datetime.today().date())
 
     # ── Quick Start Search ──
     st.markdown("<div style='font-size:0.65rem; color:#4B5563; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;'>Quick Start — Search any asset</div>", unsafe_allow_html=True)
@@ -319,13 +315,27 @@ elif page_key == "equity":
                 with k3: utils.render_metric_card("Max Drawdown", f"{max_dd*100:.2f}%")
                 with k4: utils.render_metric_card("Sharpe Ratio", f"{sharpe:.2f}")
 
-                # ── Insight + Gauge side by side ──
-                ci, cg = st.columns([2.5, 1])
-                with ci:
+                # ── Interactive Analyst Note ──
+                st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
+                
+                with st.expander("🤖 Read Fin's Analysis", expanded=True):
                     commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
-                    utils.render_insight_box(commentary)
-                with cg:
-                    st.plotly_chart(utils.plot_risk_gauge(max_dd), use_container_width=True, config={"displayModeBar": False})
+                    st.markdown(commentary)
+                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+                    f1, f2, f3 = st.columns(3)
+                    if f1.button("Why did it drop?", key="f_eq1", use_container_width=True): 
+                        st.session_state.chat_history.append({"role": "user", "content": "Why is the drawdown so high?"})
+                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("drawdown", st.session_state.ai_context)})
+                        st.toast("Fin answered in the chat!")
+                    if f2.button("Compare to Benchmark", key="f_eq2", use_container_width=True):
+                        st.session_state.chat_history.append({"role": "user", "content": "Compare it to the benchmark."})
+                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("compare", st.session_state.ai_context)})
+                        st.toast("Fin answered in the chat!")
+                    if f3.button("Explain Sharpe", key="f_eq3", use_container_width=True):
+                        st.session_state.chat_history.append({"role": "user", "content": "Explain the Sharpe ratio."})
+                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("sharpe", st.session_state.ai_context)})
+                        st.toast("Fin answered in the chat!")
 
                 # ── Chart Controls ──
                 tc1, tc2, tc3, tc4 = st.columns(4)
@@ -403,7 +413,22 @@ elif page_key == "strategy":
                 with m1: utils.render_metric_card("Buy & Hold Return", f"{bh_ann*100:.2f}%", f"Max drawdown: {bh_dd*100:.2f}%")
                 with m2: utils.render_metric_card(f"MA {short_window}/{long_window} Return", f"{st_ann*100:.2f}%", f"Max drawdown: {st_dd*100:.2f}%")
 
-                utils.render_insight_box(explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd))
+                # ── Interactive Analyst Note ──
+                st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
+                
+                with st.expander("🤖 Read Fin's Analysis", expanded=True):
+                    st.markdown(explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd))
+                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+                    f1, f2 = st.columns(2)
+                    if f1.button("How does the crossover work?", key="f_st1", use_container_width=True):
+                        st.session_state.chat_history.append({"role": "user", "content": "How does the strategy work?"})
+                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("strategy", st.session_state.ai_context)})
+                        st.toast("Fin answered in the chat!")
+                    if f2.button("Are these results good?", key="f_st2", use_container_width=True):
+                        st.session_state.chat_history.append({"role": "user", "content": "Are these backtest results good?"})
+                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("risk adjusted", st.session_state.ai_context)})
+                        st.toast("Fin answered in the chat!")
 
                 fig = go.Figure()
                 bh_cum = (1 + bh_ret).cumprod()
@@ -477,7 +502,26 @@ elif page_key == "portfolio":
             full = optimizer.optimize_portfolio(prices, "Max Sharpe")
             frontier = full["frontier"]
 
-        utils.render_insight_box(explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom"))
+        # ── Interactive Analyst Note ──
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
+        
+        with st.expander("🤖 Read Fin's Analysis", expanded=True):
+            st.markdown(explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom"))
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            f1, f2, f3 = st.columns(3)
+            if f1.button("Explain Optimization", key="f_pf1", use_container_width=True):
+                st.session_state.chat_history.append({"role": "user", "content": "Explain portfolio optimization."})
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("optimize", st.session_state.ai_context)})
+                st.toast("Fin answered in the chat!")
+            if f2.button("Why diversify?", key="f_pf2", use_container_width=True):
+                st.session_state.chat_history.append({"role": "user", "content": "Why should I diversify?"})
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("diversify", st.session_state.ai_context)})
+                st.toast("Fin answered in the chat!")
+            if f3.button("Assess Risk", key="f_pf3", use_container_width=True):
+                st.session_state.chat_history.append({"role": "user", "content": "Is this portfolio risky?"})
+                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("risky", st.session_state.ai_context)})
+                st.toast("Fin answered in the chat!")
 
         st.session_state['ai_context'] = {
             'asset': f"portfolio ({', '.join(valid)})", 'horizon': 'the selected period',
@@ -513,8 +557,13 @@ elif page_key == "portfolio":
 # ══════════════════════════════════════════
 
 with st.popover("💬"):
-    st.markdown("<div style='font-size:1rem;font-weight:600;color:#F9FAFB'>FinSight Copilot</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:0.7rem;color:#6B7280;margin-bottom:12px'>Context-aware assistant</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='display:flex; align-items:center; gap:8px; margin-bottom:4px;'>
+        <div style='width:24px; height:24px; border-radius:50%; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; font-weight:700;'>F</div>
+        <div style='font-size:1rem;font-weight:600;color:#F9FAFB'>Fin</div>
+    </div>
+    <div style='font-size:0.7rem;color:#6B7280;margin-bottom:12px'>Your AI Portfolio Analyst</div>
+    """, unsafe_allow_html=True)
 
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
