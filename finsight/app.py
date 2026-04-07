@@ -47,6 +47,36 @@ def csv_download(df, filename, label="Export CSV"):
     st.download_button(label=label, data=df.to_csv(index=True).encode('utf-8'),
                        file_name=filename, mime='text/csv')
 
+def inline_fin_analysis(page_id, base_commentary, questions):
+    """Renders the analysis box with inline Fin Q&A."""
+    history_key = f"fin_hist_{page_id}"
+    if history_key not in st.session_state:
+        st.session_state[history_key] = []
+        
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
+    
+    with st.expander("🤖 Read Fin's Analysis", expanded=True):
+        st.markdown(base_commentary)
+        
+        for q, a in st.session_state[history_key]:
+            st.markdown(f"<div style='margin-top:12px; color:#3B82F6; font-weight:600; font-size:0.85rem;'>You asked: {q}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='background:rgba(255,255,255,0.03); padding:12px 16px; border-radius:6px; border-left:2px solid #3B82F6; font-size:0.9rem; color:#D1D5DB; margin-top:6px;'>{a}</div>", unsafe_allow_html=True)
+            
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        
+        # Determine which questions to show (progressing as user asks)
+        level = min(len(st.session_state[history_key]), len(questions) - 1)
+        current_qs = questions[level]
+        
+        if current_qs:
+            cols = st.columns(len(current_qs))
+            for i, (btn_label, prompt) in enumerate(current_qs):
+                if cols[i].button(btn_label, key=f"btn_{page_id}_{level}_{i}", use_container_width=True):
+                    ans = ai_copilot.generate_response(prompt, st.session_state['ai_context'])
+                    st.session_state[history_key].append((btn_label, ans))
+                    st.rerun()
+
 # ── Sidebar Navigation Shell ──
 st.sidebar.markdown("""
 <div style='padding: 12px 0 18px 0; border-bottom: 1px solid #1F2937; margin-bottom: 20px;'>
@@ -316,26 +346,17 @@ elif page_key == "equity":
                 with k4: utils.render_metric_card("Sharpe Ratio", f"{sharpe:.2f}")
 
                 # ── Interactive Analyst Note ──
-                st.markdown("<hr>", unsafe_allow_html=True)
-                st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
-                
-                with st.expander("🤖 Read Fin's Analysis", expanded=True):
-                    commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
-                    st.markdown(commentary)
-                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-                    f1, f2, f3 = st.columns(3)
-                    if f1.button("Why did it drop?", key="f_eq1", use_container_width=True): 
-                        st.session_state.chat_history.append({"role": "user", "content": "Why is the drawdown so high?"})
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("drawdown", st.session_state.ai_context)})
-                        st.toast("Fin answered in the chat!")
-                    if f2.button("Compare to Benchmark", key="f_eq2", use_container_width=True):
-                        st.session_state.chat_history.append({"role": "user", "content": "Compare it to the benchmark."})
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("compare", st.session_state.ai_context)})
-                        st.toast("Fin answered in the chat!")
-                    if f3.button("Explain Sharpe", key="f_eq3", use_container_width=True):
-                        st.session_state.chat_history.append({"role": "user", "content": "Explain the Sharpe ratio."})
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("sharpe", st.session_state.ai_context)})
-                        st.toast("Fin answered in the chat!")
+                commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
+                questions = [
+                    # Level 0
+                    [("Why did it drop?", "Why is the drawdown so high?"), 
+                     ("Compare to Benchmark", "Compare it to the benchmark."), 
+                     ("Explain Sharpe", "Explain the Sharpe ratio.")],
+                    # Level 1 (Follow-up)
+                    [("Explain the chart trend", "Explain the moving average chart."),
+                     ("How can I diversify?", "How do I diversify my portfolio against this?")]
+                ]
+                inline_fin_analysis("equity", commentary, questions)
 
                 # ── Chart Controls ──
                 tc1, tc2, tc3, tc4 = st.columns(4)
@@ -414,21 +435,14 @@ elif page_key == "strategy":
                 with m2: utils.render_metric_card(f"MA {short_window}/{long_window} Return", f"{st_ann*100:.2f}%", f"Max drawdown: {st_dd*100:.2f}%")
 
                 # ── Interactive Analyst Note ──
-                st.markdown("<hr>", unsafe_allow_html=True)
-                st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
-                
-                with st.expander("🤖 Read Fin's Analysis", expanded=True):
-                    st.markdown(explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd))
-                    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-                    f1, f2 = st.columns(2)
-                    if f1.button("How does the crossover work?", key="f_st1", use_container_width=True):
-                        st.session_state.chat_history.append({"role": "user", "content": "How does the strategy work?"})
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("strategy", st.session_state.ai_context)})
-                        st.toast("Fin answered in the chat!")
-                    if f2.button("Are these results good?", key="f_st2", use_container_width=True):
-                        st.session_state.chat_history.append({"role": "user", "content": "Are these backtest results good?"})
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("risk adjusted", st.session_state.ai_context)})
-                        st.toast("Fin answered in the chat!")
+                commentary = explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd)
+                questions = [
+                    [("How does the crossover work?", "How does the strategy work?"),
+                     ("Are these results good?", "Are these backtest results good?")],
+                    [("What is a SMA?", "Explain the moving average chart."),
+                     ("Is this too risky?", "Explain the drawdown.")]
+                ]
+                inline_fin_analysis("strategy", commentary, questions)
 
                 fig = go.Figure()
                 bh_cum = (1 + bh_ret).cumprod()
@@ -503,25 +517,14 @@ elif page_key == "portfolio":
             frontier = full["frontier"]
 
         # ── Interactive Analyst Note ──
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
-        
-        with st.expander("🤖 Read Fin's Analysis", expanded=True):
-            st.markdown(explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom"))
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-            f1, f2, f3 = st.columns(3)
-            if f1.button("Explain Optimization", key="f_pf1", use_container_width=True):
-                st.session_state.chat_history.append({"role": "user", "content": "Explain portfolio optimization."})
-                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("optimize", st.session_state.ai_context)})
-                st.toast("Fin answered in the chat!")
-            if f2.button("Why diversify?", key="f_pf2", use_container_width=True):
-                st.session_state.chat_history.append({"role": "user", "content": "Why should I diversify?"})
-                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("diversify", st.session_state.ai_context)})
-                st.toast("Fin answered in the chat!")
-            if f3.button("Assess Risk", key="f_pf3", use_container_width=True):
-                st.session_state.chat_history.append({"role": "user", "content": "Is this portfolio risky?"})
-                st.session_state.chat_history.append({"role": "assistant", "content": ai_copilot.generate_response("risky", st.session_state.ai_context)})
-                st.toast("Fin answered in the chat!")
+        commentary = explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom")
+        questions = [
+            [("Explain Optimization", "Explain portfolio optimization."),
+             ("Why diversify?", "Why should I diversify?"),
+             ("Assess Risk", "Is this portfolio risky?")],
+            [("What is the efficient frontier?", "Explain what the efficient frontier means.")]
+        ]
+        inline_fin_analysis("portfolio", commentary, questions)
 
         st.session_state['ai_context'] = {
             'asset': f"portfolio ({', '.join(valid)})", 'horizon': 'the selected period',

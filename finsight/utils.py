@@ -40,6 +40,9 @@ def inject_premium_css():
         min-width: 260px !important;
         max-width: 260px !important;
         width: 260px !important;
+        top: 32px !important; /* Start below the ticker tape */
+        height: calc(100vh - 32px) !important;
+        z-index: 999 !important;
     }
     /* Hide the collapse button so it never looks collapsible */
     button[data-testid="stSidebarCollapseButton"],
@@ -265,13 +268,18 @@ def inject_premium_css():
         top: 0;
         left: 0;
         right: 0;
-        z-index: 99999;
+        z-index: 9999999 !important; /* Ensure it floats above the sidebar */
         height: 32px;
         background: rgba(10, 14, 23, 0.85);
         border-bottom: 1px solid #1F2937;
         overflow: hidden;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
+    }
+    
+    /* Hide Streamlit header entirely */
+    header[data-testid="stHeader"] {
+        display: none !important;
     }
     .ticker-tape-track {
         display: flex;
