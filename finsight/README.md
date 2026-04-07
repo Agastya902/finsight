@@ -59,6 +59,9 @@ This product is completely ready for one-click deployment via Streamlit Communit
 2. Select target main path `app.py`.
 3. Launch! The engine intrinsically loads dependencies defined in `requirements.txt`.
 
+### ⚡ Keeping App Warm
+To prevent Streamlit Community Cloud from putting the application to sleep due to inactivity, a **GitHub Actions** workflow (`.github/workflows/keep_alive.yml`) is configured to ping the live URL every 10 minutes. This ensures a fast, "always-on" experience for recruiters and stakeholders.
+
 ## Future Roadmap
 - Implementation of Kelly Criterion sizing tools.
 - PostgreSQL connector for saving user configuration states.
