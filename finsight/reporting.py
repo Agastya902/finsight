@@ -27,6 +27,17 @@ class ReportArtifact:
     pdf: bytes
     csv: str
     filename_base: str
+    pdf_error: str = None
+
+def safe_text(s: str) -> str:
+    """Sanitizes text for FPDF: removes emojis, normalizes whitespace, handles long tokens."""
+    if not isinstance(s, str):
+        return str(s)
+    # Remove common emojis/symbols that FPDF's standard fonts can't handle
+    s = s.encode('ascii', 'ignore').decode('ascii')
+    # Normalize whitespace
+    s = " ".join(s.split())
+    return s
 
 def generate_exec_summary(state: ReportState) -> list:
     """Deterministic rule-based summary generation."""
@@ -148,66 +159,96 @@ def build_html_report(state: ReportState) -> str:
     """
     return html
 
-def build_pdf_report(state: ReportState) -> bytes:
-    """Builds a professional PDF report using fpdf2."""
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("helvetica", "B", 20)
-    
-    # Title
-    pdf.cell(0, 15, "FinSight Research Report", ln=True, align='L')
-    pdf.set_font("helvetica", "", 10)
-    pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 5, f"Analysis Type: {state.page_type.capitalize()} Intelligence", ln=True)
-    pdf.cell(0, 5, f"Date Range: {state.start_date} to {state.end_date}", ln=True)
-    pdf.cell(0, 5, f"Generated: {state.timestamp}", ln=True)
-    
-    pdf.ln(10)
-    pdf.set_draw_color(59, 130, 246)
-    pdf.set_line_width(1)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(5)
-    
-    # Executive Summary
-    pdf.set_font("helvetica", "B", 14)
-    pdf.set_text_color(0, 0, 0)
-    pdf.cell(0, 10, "Executive Summary", ln=True)
-    pdf.set_font("helvetica", "", 11)
-    for s in generate_exec_summary(state):
-        pdf.multi_cell(0, 7, f"- {s}")
-    
-    pdf.ln(10)
-    
-    # Metrics Table
-    pdf.set_font("helvetica", "B", 14)
-    pdf.cell(0, 10, "Key Metrics", ln=True)
-    pdf.set_font("helvetica", "B", 10)
-    pdf.set_fill_color(249, 250, 251)
-    
-    col_width = 95
-    pdf.cell(col_width, 10, "Metric", border=1, fill=True)
-    pdf.cell(col_width, 10, "Value", border=1, fill=True, ln=True)
-    
-    pdf.set_font("helvetica", "", 10)
-    for k, v in state.metrics.items():
-        if isinstance(v, str):
-            pdf.cell(col_width, 8, k.replace("_", " ").title(), border=1)
-            pdf.cell(col_width, 8, str(v), border=1, ln=True)
+def build_pdf_report(state: ReportState) -> tuple:
+    """Builds a professional PDF report using fpdf2, with robust error handling."""
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+        margin = 15
+        pdf.set_margins(margin, margin, margin)
+        effective_w = pdf.epw # effective page width (w - margins)
+        
+        # Header Branding
+        pdf.set_font("helvetica", "B", 20)
+        pdf.set_text_color(59, 130, 246) # FinSight Blue
+        pdf.cell(effective_w, 15, "FinSight Research Report", ln=True, align='L')
+        
+        pdf.set_font("helvetica", "", 9)
+        pdf.set_text_color(107, 114, 128) # Grey
+        pdf.cell(effective_w/2, 5, f"Analysis Type: {state.page_type.capitalize()} Intelligence", ln=0)
+        pdf.cell(effective_w/2, 5, f"Date: {state.timestamp}", ln=1, align='R')
+        pdf.cell(effective_w, 5, f"Range: {state.start_date} to {state.end_date}", ln=1)
+        
+        pdf.ln(8)
+        pdf.set_draw_color(31, 41, 55) # Border Color
+        pdf.line(margin, pdf.get_y(), pdf.w - margin, pdf.get_y())
+        pdf.ln(8)
+        
+        # Executive Summary
+        pdf.set_font("helvetica", "B", 13)
+        pdf.set_text_color(17, 24, 39)
+        pdf.cell(effective_w, 10, "EXECUTIVE SUMMARY", ln=True)
+        pdf.set_font("helvetica", "", 10)
+        pdf.set_text_color(31, 41, 55)
+        
+        summary_points = generate_exec_summary(state)
+        for s in summary_points:
+            pdf.multi_cell(effective_w, 6, f"- {safe_text(s)}")
+        
+        pdf.ln(10)
+        
+        # Metrics Section
+        pdf.set_font("helvetica", "B", 13)
+        pdf.cell(effective_w, 10, "KEY PERFORMANCE INDICATORS", ln=True)
+        
+        # Table Header
+        pdf.set_font("helvetica", "B", 9)
+        pdf.set_fill_color(249, 250, 251)
+        pdf.cell(effective_w * 0.6, 9, " METRIC", border=1, fill=True)
+        pdf.cell(effective_w * 0.4, 9, " VALUE", border=1, fill=True, ln=True)
+        
+        # Table Body
+        pdf.set_font("helvetica", "", 9)
+        for k, v in state.metrics.items():
+            if isinstance(v, str):
+                label = safe_text(k.replace("_", " ").title())
+                pdf.cell(effective_w * 0.6, 8, f" {label}", border=1)
+                pdf.cell(effective_w * 0.4, 8, f" {safe_text(v)}", border=1, ln=True)
+        
+        # Optional Strategy Comparison Table
+        if 'comparison' in state.tables:
+            pdf.ln(10)
+            pdf.set_font("helvetica", "B", 13)
+            pdf.cell(effective_w, 10, "STRATEGY COMPARISON", ln=True)
+            df_c = state.tables['comparison']
             
-    pdf.ln(10)
+            pdf.set_font("helvetica", "B", 9)
+            w1, w2, w3 = effective_w * 0.4, effective_w * 0.3, effective_w * 0.3
+            pdf.cell(w1, 9, " METRIC", border=1, fill=True)
+            pdf.cell(w2, 9, " STRATEGY", border=1, fill=True)
+            pdf.cell(w3, 9, " PASSIVE", border=1, fill=True, ln=True)
+            
+            pdf.set_font("helvetica", "", 9)
+            for _, row in df_c.iterrows():
+                pdf.cell(w1, 8, f" {safe_text(row['Metric'])}", border=1)
+                pdf.cell(w2, 8, f" {safe_text(row['Strategy'])}", border=1)
+                pdf.cell(w3, 8, f" {safe_text(row['Buy & Hold'])}", border=1, ln=True)
+                
+        # Footer Disclaimer
+        pdf.set_y(-25)
+        pdf.set_font("helvetica", "I", 8)
+        pdf.set_text_color(156, 163, 175)
+        disclaimer = "DISCLAIMER: This report is generated for educational purposes only and does not constitute financial advice. FinSight is a research tool and is not liable for investment decisions made based on this output."
+        pdf.multi_cell(effective_w, 4, safe_text(disclaimer), align='C')
 
-    # Disclaimer
-    pdf.set_y(-40)
-    pdf.set_font("helvetica", "I", 8)
-    pdf.set_text_color(150, 150, 150)
-    pdf.multi_cell(0, 4, "Disclaimer: This report is for educational purposes only. FinSight is not a financial advisor. Historical performance is not indicative of future results.", align='C')
-
-    return pdf.output()
+        return pdf.output(), None
+    except Exception as e:
+        return b"", str(e)
 
 def create_report_artifact(state: ReportState) -> ReportArtifact:
     """Entry point to build all report formats."""
     html = build_html_report(state)
-    pdf_bytes = build_pdf_report(state)
+    pdf_bytes, pdf_err = build_pdf_report(state)
     
     # Simplified CSV from metrics
     csv_str = pd.DataFrame([state.metrics]).to_csv(index=False)
@@ -218,5 +259,6 @@ def create_report_artifact(state: ReportState) -> ReportArtifact:
         html=html,
         pdf=pdf_bytes,
         csv=csv_str,
-        filename_base=filename
+        filename_base=filename,
+        pdf_error=pdf_err
     )

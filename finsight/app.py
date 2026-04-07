@@ -12,7 +12,8 @@ import strategies
 import optimizer
 import utils
 import universe
-import ai_copilot
+import ai_copilot # Keep for now if any logic depends on it, but we'll use copilot.py
+import copilot
 import reporting
 
 # ── Page Config ──
@@ -30,6 +31,10 @@ if 'last_report' not in st.session_state:
     st.session_state['last_report'] = None
 if 'show_report_preview' not in st.session_state:
     st.session_state['show_report_preview'] = False
+if 'active_page' not in st.session_state:
+    st.session_state['active_page'] = "overview"
+if 'show_chat' not in st.session_state:
+    st.session_state['show_chat'] = False
 
 # ── Time Horizon Helpers ──
 def get_horizon_dates(horizon: str):
@@ -52,36 +57,7 @@ def csv_download(df, filename, label="Export CSV"):
     st.download_button(label=label, data=df.to_csv(index=True).encode('utf-8'),
                        file_name=filename, mime='text/csv')
 
-def inline_fin_analysis(page_id, base_commentary, questions):
-    """Renders the analysis box with inline Fin Q&A."""
-    history_key = f"fin_hist_{page_id}"
-    if history_key not in st.session_state:
-        st.session_state[history_key] = []
-        
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<div style='font-size:0.65rem; color:#3B82F6; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:12px;'>Analysis</div>", unsafe_allow_html=True)
-    
-    with st.expander("🤖 Read Fin's Analysis", expanded=True):
-        st.markdown(base_commentary)
-        
-        for q, a in st.session_state[history_key]:
-            st.markdown(f"<div style='margin-top:12px; color:#3B82F6; font-weight:600; font-size:0.85rem;'>You asked: {q}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='background:rgba(255,255,255,0.03); padding:12px 16px; border-radius:6px; border-left:2px solid #3B82F6; font-size:0.9rem; color:#D1D5DB; margin-top:6px;'>{a}</div>", unsafe_allow_html=True)
-            
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        
-        # Determine which questions to show (progressing as user asks)
-        level = min(len(st.session_state[history_key]), len(questions) - 1)
-        current_qs = questions[level]
-        
-        if current_qs:
-            cols = st.columns(len(current_qs))
-            for i, (btn_label, prompt) in enumerate(current_qs):
-                if cols[i].button(btn_label, key=f"btn_{page_id}_{level}_{i}", use_container_width=True):
-                    ans = ai_copilot.generate_response(prompt, st.session_state['ai_context'])
-                    st.session_state[history_key].append((btn_label, ans))
-                    st.rerun()
-
+# ── Actions ──
 def trigger_report_generation(state):
     """Triggers report building and stores in session state."""
     with st.spinner("Compiling institutional report..."):
@@ -90,57 +66,81 @@ def trigger_report_generation(state):
         st.session_state['show_report_preview'] = True
 
 def display_report_preview():
-    """Renders the in-app report preview and download buttons."""
+    """Renders the in-app report preview and download buttons with error fallbacks."""
     if st.session_state['last_report'] and st.session_state['show_report_preview']:
-        st.markdown("<hr>", unsafe_allow_html=True)
-        st.markdown("<div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;'>"
-                    "<div style='font-size:1.1rem; font-weight:600; color:#F9FAFB;'>Research Report Preview</div>"
-                    "</div>", unsafe_allow_html=True)
-        
         artifact = st.session_state['last_report']
         
-        # Download buttons
-        b1, b2, b3, b4 = st.columns([1,1,1,2])
-        b1.download_button("Download HTML", data=artifact.html, file_name=f"{artifact.filename_base}.html", mime="text/html", use_container_width=True)
-        b2.download_button("Download PDF", data=artifact.pdf, file_name=f"{artifact.filename_base}.pdf", mime="application/pdf", use_container_width=True)
-        b3.download_button("Download CSV", data=artifact.csv, file_name=f"{artifact.filename_base}.csv", mime="text/csv", use_container_width=True)
-        if b4.button("Close Preview", use_container_width=True):
-            st.session_state['show_report_preview'] = False
-            st.rerun()
+        st.markdown("<hr>", unsafe_allow_html=True)
+        with st.expander("📄 View Research Report Preview", expanded=True):
+            # Header actions
+            c1, c2 = st.columns([4, 1])
+            c1.markdown(f"**Institutional Report:** {artifact.filename_base}")
+            if c2.button("Close Preview", use_container_width=True):
+                st.session_state['show_report_preview'] = False
+                st.rerun()
+
+            # Status / Error Messaging
+            if artifact.pdf_error:
+                st.warning(f"⚠️ PDF generation encountered an issue, but your HTML report is ready. (Error: {artifact.pdf_error[:50]}...)")
             
-        # Preview
-        st.markdown("<div style='background:white; border-radius:8px; overflow:hidden;'>"
-                    f"{artifact.html}"
-                    "</div>", unsafe_allow_html=True)
-        st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+            # Download buttons
+            b1, b2, b3 = st.columns(3)
+            b1.download_button("Download HTML", data=artifact.html, file_name=f"{artifact.filename_base}.html", mime="text/html", use_container_width=True)
+            
+            if not artifact.pdf_error:
+                b2.download_button("Download PDF", data=artifact.pdf, file_name=f"{artifact.filename_base}.pdf", mime="application/pdf", use_container_width=True)
+            else:
+                b2.button("PDF Unavailable", disabled=True, use_container_width=True)
+                
+            b3.download_button("Download CSV", data=artifact.csv, file_name=f"{artifact.filename_base}.csv", mime="text/csv", use_container_width=True)
+            
+            st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+            
+            # Preview Frame
+            st.markdown("<div style='background:white; border-radius:8px; overflow:hidden; border: 1px solid #E5E7EB;'>"
+                        f"{artifact.html}"
+                        "</div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
 # ── Top Navigation Rail ──
 st.markdown("<div class='top-nav-container'>", unsafe_allow_html=True)
-nav_col1, nav_col2, nav_col3 = st.columns([1.5, 5, 1])
+nav_col1, nav_col2, nav_col3 = st.columns([1.8, 5, 1.2])
 
 with nav_col1:
     st.markdown("""
-    <div style='display:flex; align-items:center; gap:8px; height:100%; margin-top:2px;'>
-        <div style='width:24px; height:24px; border-radius:6px; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.8rem; color:#fff; font-weight:700;'>F</div>
-        <div style='font-size:1.05rem; font-weight:600; color:#F9FAFB; letter-spacing:-0.02em;'>FinSight</div>
+    <div style='display:flex; align-items:center; gap:12px; height:100%;'>
+        <div style='width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3B82F6, #2563EB); display:flex; align-items:center; justify-content:center; font-size:1rem; color:#fff; font-weight:800; box-shadow:0 4px 12px rgba(59,130,246,0.3);'>F</div>
+        <div>
+            <div style='font-size:1.15rem; font-weight:700; color:#F9FAFB; letter-spacing:-0.03em; line-height:1;'>FinSight</div>
+            <div style='font-size:0.6rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; font-weight:600;'>Institutional Intelligence</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
 with nav_col2:
-    NAV = {
-        "Platform Overview": "overview",
-        "Equity Intelligence": "equity",
-        "Algorithmic Validator": "strategy",
-        "Portfolio Builder": "portfolio",
-    }
-    # Horizontal Radio acting as tabs
-    page = st.radio("Navigation", list(NAV.keys()), index=0, horizontal=True, label_visibility="collapsed")
-    page_key = NAV[page]
+    st.markdown('<div class="top-nav-tabs">', unsafe_allow_html=True)
+    t1, t2, t3, t4 = st.columns(4)
+    pages = [
+        ("Platform Overview", "overview"),
+        ("Equity Intelligence", "equity"),
+        ("Algorithmic Validator", "strategy"),
+        ("Portfolio Builder", "portfolio")
+    ]
+    for i, (label, key) in enumerate(pages):
+        is_active = st.session_state.active_page == key
+        btn_class = "nav-tab-btn nav-tab-active" if is_active else "nav-tab-btn"
+        # We use a bit of a hack to apply the custom class via markdown around the button
+        # But for now, we'll just use regular buttons and rely on session state
+        if [t1, t2, t3, t4][i].button(label, key=f"nav_{key}", use_container_width=True, type="secondary" if not is_active else "primary"):
+            st.session_state.active_page = key
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with nav_col3:
     mode = st.selectbox("mode", ["Summary", "Detailed"], label_visibility="collapsed")
 
 st.markdown("</div>", unsafe_allow_html=True)
+page_key = st.session_state.active_page
 # ══════════════════════════════════════════
 # GLOBAL TICKER TAPE (all pages)
 # ══════════════════════════════════════════
@@ -311,7 +311,7 @@ if page_key == "overview":
             </div>
             """, unsafe_allow_html=True)
 
-    st.session_state['ai_context'] = {'asset': 'the platform overview', 'horizon': 'N/A'}
+    st.session_state['ai_context'] = {'page': 'overview', 'asset': 'the platform overview', 'horizon': 'N/A'}
 
 
 elif page_key == "equity":
@@ -378,6 +378,7 @@ elif page_key == "equity":
                 display_report_preview()
 
                 st.session_state['ai_context'] = {
+                    'page': 'equity',
                     'asset': ticker, 'benchmark': benchmark,
                     'horizon': 'the selected period',
                     'sharpe': f"{sharpe:.2f}",
@@ -393,18 +394,7 @@ elif page_key == "equity":
                 with k3: utils.render_metric_card("Max Drawdown", f"{max_dd*100:.2f}%")
                 with k4: utils.render_metric_card("Sharpe Ratio", f"{sharpe:.2f}")
 
-                # ── Interactive Analyst Note ──
-                commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
-                questions = [
-                    # Level 0
-                    [("Why did it drop?", "Why is the drawdown so high?"), 
-                     ("Compare to Benchmark", "Compare it to the benchmark."), 
-                     ("Explain Sharpe", "Explain the Sharpe ratio.")],
-                    # Level 1 (Follow-up)
-                    [("Explain the chart trend", "Explain the moving average chart."),
-                     ("How can I diversify?", "How do I diversify my portfolio against this?")]
-                ]
-                inline_fin_analysis("equity", commentary, questions)
+                utils.render_insight_box(commentary)
 
                 # ── Chart Controls ──
                 tc1, tc2, tc3, tc4 = st.columns(4)
@@ -498,8 +488,9 @@ elif page_key == "strategy":
                 display_report_preview()
 
                 st.session_state['ai_context'] = {
+                    'page': 'strategy',
                     'asset': ticker, 'horizon': 'the backtest period',
-                    'sharpe': 'N/A',
+                    'short': short_window, 'long': long_window,
                     'ann_ret': f"{st_ann*100:+.2f}%",
                     'max_dd': f"{st_dd*100:.2f}%"
                 }
@@ -508,15 +499,7 @@ elif page_key == "strategy":
                 with m1: utils.render_metric_card("Buy & Hold Return", f"{bh_ann*100:.2f}%", f"Max drawdown: {bh_dd*100:.2f}%")
                 with m2: utils.render_metric_card(f"MA {short_window}/{long_window} Return", f"{st_ann*100:.2f}%", f"Max drawdown: {st_dd*100:.2f}%")
 
-                # ── Interactive Analyst Note ──
-                commentary = explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd)
-                questions = [
-                    [("How does the crossover work?", "How does the strategy work?"),
-                     ("Are these results good?", "Are these backtest results good?")],
-                    [("What is a SMA?", "Explain the moving average chart."),
-                     ("Is this too risky?", "Explain the drawdown.")]
-                ]
-                inline_fin_analysis("strategy", commentary, questions)
+                utils.render_insight_box(commentary)
 
                 fig = go.Figure()
                 bh_cum = (1 + bh_ret).cumprod()
@@ -590,17 +573,11 @@ elif page_key == "portfolio":
             full = optimizer.optimize_portfolio(prices, "Max Sharpe")
             frontier = full["frontier"]
 
-        # ── Interactive Analyst Note ──
-        commentary = explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom")
-        questions = [
-            [("Explain Optimization", "Explain portfolio optimization."),
-             ("Why diversify?", "Why should I diversify?"),
-             ("Assess Risk", "Is this portfolio risky?")],
-            [("What is the efficient frontier?", "Explain what the efficient frontier means.")]
-        ]
-        inline_fin_analysis("portfolio", commentary, questions)
+        utils.render_insight_box(commentary)
 
         st.session_state['ai_context'] = {
+            'page': 'portfolio',
+            'tickers': valid,
             'asset': f"portfolio ({', '.join(valid)})", 'horizon': 'the selected period',
             'sharpe': f"{sh:.2f}", 'ann_ret': f"{ret*100:+.2f}%",
             'vol': f"{vol*100:.2f}%", 'max_dd': 'N/A'
@@ -652,39 +629,20 @@ elif page_key == "portfolio":
 # COPILOT (persistent across all pages)
 # ══════════════════════════════════════════
 
-with st.popover("💬"):
-    st.markdown("""
-    <div style='display:flex; align-items:center; gap:8px; margin-bottom:4px;'>
-        <div style='width:24px; height:24px; border-radius:50%; background:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; font-weight:700;'>F</div>
-        <div style='font-size:1rem;font-weight:600;color:#F9FAFB'>Fin</div>
-    </div>
-    <div style='font-size:0.7rem;color:#6B7280;margin-bottom:12px'>Your AI Portfolio Analyst</div>
-    """, unsafe_allow_html=True)
+# FAB Button
+if st.button("💬", key="copilot_fab"):
+    st.session_state.show_chat = not st.session_state.show_chat
+    st.rerun()
 
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+# Apply the class via Javascript/Markdown hack for the floating button
+st.markdown(f"""
+    <script>
+        var btn = window.parent.document.querySelector('button[key="copilot_fab"]');
+        if (btn) {{
+            btn.classList.add('floating-copilot-btn');
+        }}
+    </script>
+""", unsafe_allow_html=True)
 
-    # Suggested prompts
-    p1, p2 = st.columns(2)
-    prompt = None
-    if p1.button("Explain Sharpe ratio", key="qp1"): prompt = "Explain my Sharpe ratio"
-    if p2.button("Explain this page", key="qp2"): prompt = "Explain this dashboard"
-    p3, p4 = st.columns(2)
-    if p3.button("Compare vs benchmark", key="qp3"): prompt = "Compare asset vs benchmark"
-    if p4.button("Assess risk", key="qp4"): prompt = "Why is my portfolio risky"
-
-    def submit(text):
-        if text:
-            st.session_state.chat_history.append({"role": "user", "content": text})
-            resp = ai_copilot.generate_response(text, st.session_state.ai_context)
-            st.session_state.chat_history.append({"role": "assistant", "content": resp})
-
-    if prompt:
-        submit(prompt)
-        st.rerun()
-
-    user_q = st.chat_input("Ask about your data...")
-    if user_q:
-        submit(user_q)
-        st.rerun()
+# Render Chat Drawer
+copilot.render_chat_drawer()

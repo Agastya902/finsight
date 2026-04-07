@@ -145,25 +145,94 @@ def inject_premium_css():
         color: #F9FAFB;
     }
 
-    /* ── Insight Callout ── */
-    .insight-box {
-        background-color: rgba(17, 24, 39, 0.6);
-        border: 1px solid #1F2937;
-        border-left: 3px solid #3B82F6;
-        padding: 16px 20px;
-        margin: 12px 0;
-        font-size: 0.9rem;
-        color: #D1D5DB;
-        line-height: 1.55;
-        border-radius: 4px;
+    /* ── Floating Copilot & Drawer ── */
+    .floating-copilot-btn {
+        position: fixed !important;
+        bottom: 30px !important;
+        right: 30px !important;
+        z-index: 1000000 !important;
+        background-color: #3B82F6 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        width: 60px !important;
+        height: 60px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.5rem !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(59,130,246,0.4);
+        cursor: pointer !important;
+        border: none !important;
+        animation: pulse-blue 2.5s infinite;
+        transition: transform 0.2s ease, background-color 0.2s ease !important;
     }
-    .insight-label {
-        color: #6B7280;
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 6px;
+    .floating-copilot-btn:hover {
+        transform: scale(1.1);
+        background-color: #2563EB !important;
+    }
+    
+    @keyframes pulse-blue {
+        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+
+    .chat-drawer {
+        position: fixed !important;
+        bottom: 100px !important;
+        right: 30px !important;
+        width: 380px !important;
+        height: 550px !important;
+        background-color: #0F1219 !important;
+        border-radius: 12px !important;
+        border: 1px solid #1F2937 !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.7) !important;
+        z-index: 1000001 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        animation: slide-in-chat 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes slide-in-chat {
+        from { transform: translateY(20px) scale(0.95); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    
+    .chat-header {
+        padding: 16px 20px !important;
+        background: #111827 !important;
+        border-bottom: 1px solid #1F2937 !important;
+    }
+    .chat-logo {
+        width: 32px; height: 32px; border-radius: 50%; background: #3B82F6; 
+        display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;
+    }
+
+    /* ── Nav Tabs ── */
+    [data-testid="stHorizontalBlock"] .stButton > button {
+        border-radius: 50px !important;
+        padding: 8px 18px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    /* Target only the buttons in the navigation rail */
+    .top-nav-tabs .stButton > button {
+        background-color: transparent !important;
+        border: 1px solid transparent !important;
+        color: #9CA3AF !important;
+    }
+    
+    .top-nav-tabs .stButton > button:hover {
+        background-color: rgba(255,255,255,0.04) !important;
+        color: white !important;
+    }
+    
+    .top-nav-tabs .stButton > button[kind="primary"] {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+        color: #3B82F6 !important;
     }
 
     /* ── Hero ── */
@@ -220,39 +289,7 @@ def inject_premium_css():
         border-color: #1F2937 !important;
     }
 
-    /* ── Floating Copilot Button ── */
-    @keyframes copilot-pulse {
-        0%   { box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 0 rgba(59,130,246,0.35); }
-        70%  { box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 8px rgba(59,130,246,0); }
-        100% { box-shadow: 0 2px 12px rgba(0,0,0,0.4), 0 0 0 0 rgba(59,130,246,0); }
-    }
-    [data-testid="stPopover"] {
-        position: fixed !important;
-        bottom: 24px !important;
-        right: 24px !important;
-        z-index: 999999 !important;
-    }
-    [data-testid="stPopover"] > button {
-        background-color: #3B82F6 !important;
-        color: #FFF !important;
-        border-radius: 50% !important;
-        width: 54px !important;
-        height: 54px !important;
-        min-height: 54px !important;
-        border: none !important;
-        animation: copilot-pulse 2.5s infinite;
-        transition: transform 0.15s ease, background-color 0.15s ease !important;
-        padding: 0 !important;
-    }
-    [data-testid="stPopover"] > button:hover {
-        transform: scale(1.08) !important;
-        background-color: #2563EB !important;
-    }
-    [data-testid="stPopover"] > button p {
-        font-size: 1.3rem;
-        margin: 0;
-        line-height: 1;
-    }
+    /* Floating button handled by new styles above */
 
     /* ── Copilot Panel ── */
     [data-testid="stPopoverBody"] {
