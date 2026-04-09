@@ -33,8 +33,8 @@ if 'show_report_preview' not in st.session_state:
     st.session_state['show_report_preview'] = False
 if 'active_page' not in st.session_state:
     st.session_state['active_page'] = "overview"
-if 'show_chat' not in st.session_state:
-    st.session_state['show_chat'] = False
+if 'fin_open' not in st.session_state:
+    st.session_state['fin_open'] = False
 
 # ── Time Horizon Helpers ──
 def get_horizon_dates(horizon: str):
@@ -331,7 +331,7 @@ if page_key == "overview":
     with ac2:
         st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
         if st.button("Open Fin Copilot", use_container_width=True, key="hero_open_fin"):
-            st.session_state.show_chat = True
+            st.session_state.fin_open = True
             st.rerun()
 
     st.session_state['ai_context'] = {'page': 'overview', 'asset': 'the platform overview', 'horizon': 'N/A'}
@@ -593,7 +593,7 @@ elif page_key == "portfolio":
 
 # FAB Button
 if st.button("🤖", key="copilot_fab"):
-    st.session_state.show_chat = not st.session_state.show_chat
+    st.session_state.fin_open = not st.session_state.fin_open
     st.rerun()
 
 # Apply the class via Javascript/Markdown hack for the floating button

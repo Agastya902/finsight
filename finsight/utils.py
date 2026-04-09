@@ -237,7 +237,9 @@ def inject_premium_css():
         100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
     }
 
-    .chat-drawer {
+    /* ── Floating Copilot & Drawer ── */
+    /* Target only the container hosting the marker to prevent empty boxes */
+    div:has(> #fin-drawer-marker) {
         position: fixed !important;
         bottom: 110px !important;
         right: 35px !important;
@@ -252,6 +254,13 @@ def inject_premium_css():
         flex-direction: column !important;
         overflow: hidden !important;
         animation: slide-in-chat 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        padding: 0 !important;
+    }
+
+    /* Target the vertical block inside the fixed container to handle overflow */
+    div:has(> #fin-drawer-marker) [data-testid="stVerticalBlock"] {
+        height: 100% !important;
+        overflow: hidden !important;
     }
     
     @keyframes slide-in-chat {
@@ -259,11 +268,6 @@ def inject_premium_css():
         to { transform: translateY(0) scale(1); opacity: 1; }
     }
     
-    .chat-header {
-        padding: 16px 20px !important;
-        background: #111827 !important;
-        border-bottom: 1px solid #1F2937 !important;
-    }
     .chat-logo {
         width: 32px; height: 32px; border-radius: 50%; background: #3B82F6; 
         display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;
@@ -545,7 +549,7 @@ def render_insight_box(content: str):
     # We render the CTA as a button via streamlit to ensure it can trigger session state
     c1, c2 = st.columns([1, 4])
     if c1.button("Ask Fin to explain this →", key=f"insight_cta_{hash(content)}"):
-        st.session_state.show_chat = True
+        st.session_state.fin_open = True
         # Pre-fill context or message if needed
         if "chat_history" in st.session_state:
             st.session_state.chat_history.append({"role": "user", "content": f"Can you explain this analyst note: '{content[:100]}...'?"})

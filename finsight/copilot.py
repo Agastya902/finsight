@@ -39,10 +39,10 @@ def get_suggestions(context: dict, last_user_message: str = None) -> list:
 def render_chat_drawer():
     """
     Renders the persistent floating chat drawer.
-    Uses custom CSS injected via utils.py.
+    Targeted via CSS in utils.py using a hidden marker.
     """
-    if 'show_chat' not in st.session_state:
-        st.session_state.show_chat = False
+    if 'fin_open' not in st.session_state:
+        st.session_state.fin_open = False
     
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = [
@@ -58,49 +58,38 @@ def render_chat_drawer():
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         st.rerun()
 
-    if st.session_state.show_chat:
-        # Wrap everything in a container to try and minimize the "black box" slot
-        # but the actual drawer is fixed via CSS.
+    if st.session_state.fin_open:
+        # The container itself is the drawer, targeted via CSS :has(#fin-drawer-marker)
         with st.container():
-            st.markdown('<div class="chat-drawer">', unsafe_allow_html=True)
+            # Marker for surgical CSS targeting
+            st.markdown('<span id="fin-drawer-marker"></span>', unsafe_allow_html=True)
             
-            # Chat Header
-            c_header = st.container()
-            with c_header:
-                st.markdown("""
-                <div class="chat-header">
-                    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-                        <div style="display:flex; align-items:center; gap:12px;">
-                            <div class="chat-logo">F</div>
-                            <div>
-                                <div style="font-weight:700; font-size:1rem; color:#F9FAFB;">Fin Copilot</div>
-                                <div style="font-size:0.7rem; color:#6B7280; font-weight:500;">Institutional AI Analyst</div>
-                            </div>
+            # Chat Header (Purely via Streamlit/Markdown, no broken wrapping)
+            st.markdown("""
+                <div style="padding: 16px 20px; background: #111827; border-bottom: 1px solid #1F2937; margin-bottom: 10px;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="chat-logo">F</div>
+                        <div>
+                            <div style="font-weight:700; font-size:1rem; color:#F9FAFB;">Fin Copilot</div>
+                            <div style="font-size:0.7rem; color:#6B7280; font-weight:500;">Institutional AI Analyst</div>
                         </div>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
-                # Close button is hard to do inside the HTML and make it trigger python
-                # So we use a streamlit button at the top right of the drawer (conceptual)
-                # But since it's a fixed drawer, we'll just put a 'Close' button inside the flow
+            """, unsafe_allow_html=True)
             
             # History
             chat_container = st.container(height=380, border=False)
             with chat_container:
-                # To prevent duplicates, we only render the history once.
-                # Streamlit chat_message handles this well within the loop.
                 for msg in st.session_state.chat_history:
                     with st.chat_message(msg["role"]):
                         st.markdown(msg["content"])
             
-            # Suggested Prompts (Chips)
+            # Suggested Prompts
             st.markdown("<div style='padding:0 20px; margin-bottom:12px;'>", unsafe_allow_html=True)
             context = st.session_state.get('ai_context', {})
             suggestions = get_suggestions(context)
-            
             col1, col2 = st.columns(2)
             suggestion_clicked = None
-            
             for i, sug in enumerate(suggestions):
                 target_col = col1 if i % 2 == 0 else col2
                 if target_col.button(sug, key=f"sug_btn_{i}", use_container_width=True):
@@ -111,13 +100,9 @@ def render_chat_drawer():
             c_footer = st.container()
             with c_footer:
                 user_input = st.chat_input("Ask Fin anything...")
-                
                 final_query = suggestion_clicked if suggestion_clicked else user_input
-                
                 if final_query:
-                    # Append user message
                     st.session_state.chat_history.append({"role": "user", "content": final_query})
-                    # Generate response
                     response = ai_copilot.generate_response(final_query, context)
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
                     st.rerun()
@@ -130,7 +115,5 @@ def render_chat_drawer():
                 ]
                 st.rerun()
             if c2.button("Close", key="close_chat_btn", use_container_width=True):
-                st.session_state.show_chat = False
+                st.session_state.fin_open = False
                 st.rerun()
-
-            st.markdown('</div>', unsafe_allow_html=True)
