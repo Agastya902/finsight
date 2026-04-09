@@ -61,9 +61,12 @@ def csv_download(df, filename, label="Export CSV"):
 def trigger_report_generation(state):
     """Triggers report building and stores in session state."""
     with st.spinner("Compiling institutional report..."):
+        # Temporary button label change via session state could be complex, 
+        # but spinner handles the main UX.
         artifact = reporting.create_report_artifact(state)
         st.session_state['last_report'] = artifact
         st.session_state['show_report_preview'] = True
+        st.success("Report generated successfully.")
 
 def display_report_preview():
     """Renders the in-app report preview and download buttons with error fallbacks."""
@@ -108,11 +111,11 @@ nav_col1, nav_col2, nav_col3 = st.columns([1.8, 5, 1.2])
 
 with nav_col1:
     st.markdown("""
-    <div style='display:flex; align-items:center; gap:12px; height:100%;'>
-        <div style='width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, #3B82F6, #2563EB); display:flex; align-items:center; justify-content:center; font-size:1rem; color:#fff; font-weight:800; box-shadow:0 4px 12px rgba(59,130,246,0.3);'>F</div>
+    <div class="wordmark-container">
+        <div class="logo-box">◆</div>
         <div>
-            <div style='font-size:1.15rem; font-weight:700; color:#F9FAFB; letter-spacing:-0.03em; line-height:1;'>FinSight</div>
-            <div style='font-size:0.6rem; color:#6B7280; text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; font-weight:600;'>Institutional Intelligence</div>
+            <div class="wordmark-text">FinSight</div>
+            <div class="tagline-text">Explainable Portfolio Intelligence</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -311,6 +314,26 @@ if page_key == "overview":
             </div>
             """, unsafe_allow_html=True)
 
+    # ── Ask Fin Section ──
+    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<hr>", unsafe_allow_html=True)
+    ac1, ac2 = st.columns([2, 1])
+    with ac1:
+        st.markdown("""
+        <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.1); border-radius:12px; padding:24px;">
+            <div style="font-size:1.1rem; font-weight:700; color:#F9FAFB; margin-bottom:8px;">Meet Fin, Your AI Portfolio Analyst</div>
+            <div style="font-size:0.88rem; color:#9CA3AF; line-height:1.5;">
+                Get instant explanations for any chart, metric, or portfolio decision. 
+                Fin is aware of what's on your screen and can guide you through the institutional intelligence platform.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with ac2:
+        st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+        if st.button("Open Fin Copilot", use_container_width=True, key="hero_open_fin"):
+            st.session_state.show_chat = True
+            st.rerun()
+
     st.session_state['ai_context'] = {'page': 'overview', 'asset': 'the platform overview', 'horizon': 'N/A'}
 
 
@@ -394,45 +417,18 @@ elif page_key == "equity":
                 with k3: utils.render_metric_card("Max Drawdown", f"{max_dd*100:.2f}%")
                 with k4: utils.render_metric_card("Sharpe Ratio", f"{sharpe:.2f}")
 
-                # ── Analyst Note ──
-                commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
-                if not commentary: commentary = "Run the analysis to generate an analyst note."
-                utils.render_insight_box(commentary)
-
-                # ── Chart Controls ──
-                tc1, tc2, tc3, tc4 = st.columns(4)
-                show_price = tc1.checkbox("Price", value=True)
-                show_50 = tc2.checkbox("50-day SMA", value=True)
-                show_200 = tc3.checkbox("200-day SMA", value=False)
-                show_dd = tc4.checkbox("Drawdown", value=False)
-
-                if show_dd:
-                    dd = (prices - prices.cummax()) / prices.cummax()
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(x=dd.index, y=dd*100, name="Drawdown", line=dict(color="#EF4444", width=1.5), fill='tozeroy', fillcolor="rgba(239,68,68,0.08)"))
-                    fig = utils.apply_default_layout(fig, "Drawdown")
-                    fig.update_yaxes(ticksuffix="%")
-                else:
-                    fig = go.Figure()
-                    if show_price:
-                        fig.add_trace(go.Scatter(x=prices.index, y=prices, name="Price", line=dict(color="#3B82F6", width=1.5)))
-                    sma50 = prices.rolling(50).mean()
-                    sma200 = prices.rolling(200).mean()
-                    if show_50:
-                        fig.add_trace(go.Scatter(x=sma50.index, y=sma50, name="50d SMA", line=dict(color="#10B981", width=1, dash='dot')))
-                    if show_200:
-                        fig.add_trace(go.Scatter(x=sma200.index, y=sma200, name="200d SMA", line=dict(color="#C5A572", width=1, dash='dash')))
-                    fig = utils.apply_default_layout(fig, f"{ticker} — Price & Moving Averages")
-
-                st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "toImageButtonOptions": {"format": "png", "filename": f"{ticker}_chart"}})
-
-                # ── Detailed mode extras ──
                 if mode == "Detailed":
                     fig_hist = px.histogram(daily_ret, nbins=60)
                     fig_hist.update_traces(marker_color="#3B82F6", opacity=0.65)
                     fig_hist = utils.apply_default_layout(fig_hist, "Return Distribution")
                     st.plotly_chart(fig_hist, use_container_width=True, config={"displaylogo": False})
                     csv_download(pd.DataFrame({ticker: prices}), f"{ticker}_data.csv")
+                
+                # ── Analyst Note at Bottom ──
+                st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+                commentary = explainability.summarize_stock_performance(ticker, ann_ret, ann_vol, max_dd, bench_ret)
+                if not commentary: commentary = "Run the analysis to generate an analyst note."
+                utils.render_insight_box(commentary)
 
 
 elif page_key == "strategy":
@@ -502,11 +498,6 @@ elif page_key == "strategy":
                 with m1: utils.render_metric_card("Buy & Hold Return", f"{bh_ann*100:.2f}%", f"Max drawdown: {bh_dd*100:.2f}%")
                 with m2: utils.render_metric_card(f"MA {short_window}/{long_window} Return", f"{st_ann*100:.2f}%", f"Max drawdown: {st_dd*100:.2f}%")
 
-                # ── Analyst Note ──
-                commentary = explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd)
-                if not commentary: commentary = "Run the analysis to generate an analyst note."
-                utils.render_insight_box(commentary)
-
                 fig = go.Figure()
                 bh_cum = (1 + bh_ret).cumprod()
                 fig.add_trace(go.Scatter(x=bh_cum.index, y=bh_cum, name="Buy & Hold", line=dict(color="#6B7280", width=1.5, dash="dash")))
@@ -516,6 +507,12 @@ elif page_key == "strategy":
 
                 if mode == "Detailed":
                     csv_download(strat_df, f"{ticker}_backtest.csv", "Export Backtest")
+                
+                # ── Analyst Note at Bottom ──
+                st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+                commentary = explainability.summarize_strategy_comparison(st_ann, bh_ann, st_dd, bh_dd)
+                if not commentary: commentary = "Run the analysis to generate an analyst note."
+                utils.render_insight_box(commentary)
 
 
 elif page_key == "portfolio":
@@ -579,59 +576,15 @@ elif page_key == "portfolio":
             full = optimizer.optimize_portfolio(prices, "Max Sharpe")
             frontier = full["frontier"]
 
-        # ── Analyst Note ──
-        commentary = explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom")
-        if not commentary: commentary = "Run the analysis to generate an analyst note."
-        utils.render_insight_box(commentary)
-
-        st.session_state['ai_context'] = {
-            'page': 'portfolio',
-            'tickers': valid,
-            'asset': f"portfolio ({', '.join(valid)})", 'horizon': 'the selected period',
-            'sharpe': f"{sh:.2f}", 'ann_ret': f"{ret*100:+.2f}%",
-            'vol': f"{vol*100:.2f}%", 'max_dd': 'N/A'
-        }
-
-        # ── Action Toolbar ──
-        rep_c1, rep_c2 = st.columns([5, 1])
-        with rep_c2:
-            if st.button("Generate Report", use_container_width=True, key="btn_rep_pf"):
-                rep_state = reporting.ReportState(
-                    page_type="portfolio",
-                    tickers=valid,
-                    start_date="the selected period",
-                    metrics={
-                        "Expected_Annual_Return": f"{ret*100:+.2f}%",
-                        "Projected_Volatility": f"{vol*100:.2f}%",
-                        "Portfolio_Sharpe": f"{sh:.2f}"
-                    },
-                    tables={'weights': pd.DataFrame({"Asset": valid, "Weight": final_w})}
-                )
-                trigger_report_generation(rep_state)
-        
-        display_report_preview()
-
-        k1, k2, k3 = st.columns(3)
-        with k1: utils.render_metric_card("Expected Return", f"{ret*100:.2f}%")
-        with k2: utils.render_metric_card("Volatility", f"{vol*100:.2f}%")
-        with k3: utils.render_metric_card("Sharpe Ratio", f"{sh:.2f}")
-
-        cf, cp = st.columns(2)
-        with cf:
-            st.plotly_chart(utils.plot_efficient_frontier(frontier, vol, ret), use_container_width=True, config={"displaylogo": False})
-        with cp:
-            pie = pd.DataFrame({"Asset": valid, "Weight": final_w})
-            pie = pie[pie["Weight"] > 0.005]
-            fig_pie = px.pie(pie, values='Weight', names='Asset', hole=0.55,
-                             color_discrete_sequence=["#3B82F6","#C5A572","#10B981","#8B5CF6","#F59E0B","#14B8A6"])
-            fig_pie = utils.apply_default_layout(fig_pie, "Allocation")
-            fig_pie.update_traces(textposition='outside', textinfo='percent+label',
-                                  marker=dict(line=dict(color="#0A0E17", width=2)))
-            st.plotly_chart(fig_pie, use_container_width=True, config={"displaylogo": False})
-
         if mode == "Detailed":
             st.plotly_chart(utils.plot_correlation_heatmap(prices), use_container_width=True, config={"displaylogo": False})
             csv_download(pd.DataFrame({"Asset": valid, "Weight": final_w}), "portfolio_weights.csv", "Export Weights")
+
+        # ── Analyst Note at Bottom ──
+        st.markdown("<div style='height:40px'></div>", unsafe_allow_html=True)
+        commentary = explainability.summarize_optimization(valid, final_w, ret, None, vol, objective if do_opt else "Custom")
+        if not commentary: commentary = "Run the analysis to generate an analyst note."
+        utils.render_insight_box(commentary)
 
 
 # ══════════════════════════════════════════
@@ -639,7 +592,7 @@ elif page_key == "portfolio":
 # ══════════════════════════════════════════
 
 # FAB Button
-if st.button("💬", key="copilot_fab"):
+if st.button("🤖", key="copilot_fab"):
     st.session_state.show_chat = not st.session_state.show_chat
     st.rerun()
 

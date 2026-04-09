@@ -145,53 +145,113 @@ def inject_premium_css():
         color: #F9FAFB;
     }
 
+    /* ── Insight / Analyst Note Box ── */
+    .insight-box {
+        background: linear-gradient(145deg, #111827, #0F172A);
+        border: 1px solid #1F2937;
+        border-right: 4px solid #3B82F6;
+        border-radius: 8px;
+        padding: 24px;
+        margin: 20px 0 32px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .insight-box::before {
+        content: '"';
+        position: absolute;
+        top: -10px;
+        right: 15px;
+        font-size: 80px;
+        color: rgba(59, 130, 246, 0.05);
+        font-family: serif;
+    }
+    .insight-label {
+        font-size: 0.65rem;
+        color: #3B82F6;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .insight-label::before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: #3B82F6;
+        border-radius: 3px;
+    }
+    .insight-content {
+        font-size: 0.92rem;
+        color: #D1D5DB;
+        line-height: 1.6;
+    }
+    .insight-cta {
+        margin-top: 16px;
+        font-size: 0.8rem;
+        color: #3B82F6;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: gap 0.2s ease;
+    }
+    .insight-cta:hover {
+        gap: 10px;
+        text-decoration: underline;
+    }
+
     /* ── Floating Copilot & Drawer ── */
     .floating-copilot-btn {
         position: fixed !important;
-        bottom: 30px !important;
-        right: 30px !important;
+        bottom: 35px !important;
+        right: 35px !important;
         z-index: 1000000 !important;
-        background-color: #3B82F6 !important;
+        background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
         color: white !important;
         border-radius: 50% !important;
-        width: 60px !important;
-        height: 60px !important;
+        width: 64px !important;
+        height: 64px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        font-size: 1.5rem !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(59,130,246,0.4);
+        font-size: 1.8rem !important;
+        box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset !important;
         cursor: pointer !important;
         border: none !important;
         animation: pulse-blue 2.5s infinite;
-        transition: transform 0.2s ease, background-color 0.2s ease !important;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
     }
     .floating-copilot-btn:hover {
-        transform: scale(1.1);
-        background-color: #2563EB !important;
+        transform: scale(1.1) rotate(5deg);
+        background: linear-gradient(135deg, #4F46E5, #3B82F6) !important;
+        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.6) !important;
     }
     
     @keyframes pulse-blue {
-        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-        70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
+        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+        70% { box-shadow: 0 0 0 18px rgba(59, 130, 246, 0); }
         100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
     }
 
     .chat-drawer {
         position: fixed !important;
-        bottom: 100px !important;
-        right: 30px !important;
-        width: 380px !important;
-        height: 550px !important;
-        background-color: #0F1219 !important;
-        border-radius: 12px !important;
+        bottom: 110px !important;
+        right: 35px !important;
+        width: 400px !important;
+        height: 620px !important;
+        background-color: #0A0E17 !important;
+        border-radius: 16px !important;
         border: 1px solid #1F2937 !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.7) !important;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.8) !important;
         z-index: 1000001 !important;
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
-        animation: slide-in-chat 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: slide-in-chat 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
     @keyframes slide-in-chat {
@@ -230,9 +290,48 @@ def inject_premium_css():
     }
     
     .top-nav-tabs .stButton > button[kind="primary"] {
-        background-color: rgba(59, 130, 246, 0.1) !important;
-        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+        background-color: rgba(59, 130, 246, 0.12) !important;
+        border: 1px solid rgba(59, 130, 246, 0.4) !important;
         color: #3B82F6 !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* ── Logo Styling ── */
+    .wordmark-container {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 100%;
+        padding-left: 4px;
+    }
+    .logo-box {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3B82F6, #2563EB);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #fff;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .wordmark-text {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #F9FAFB;
+        letter-spacing: -0.04em;
+        line-height: 1;
+    }
+    .tagline-text {
+        font-size: 0.65rem;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 4px;
+        font-weight: 500;
     }
 
     /* ── Hero ── */
@@ -427,7 +526,7 @@ def render_metric_card(title: str, value: str, subtext: str = None):
     """, unsafe_allow_html=True)
 
 def render_insight_box(content: str):
-    """Safely renders the analyst note with defensive type checking."""
+    """Safely renders the analyst note with an interactive Ask Fin CTA."""
     if content is None:
         content = "Analysis results pending..."
     elif not isinstance(content, str):
@@ -439,9 +538,20 @@ def render_insight_box(content: str):
     st.markdown(f"""
         <div class="insight-box">
             <div class="insight-label">Analyst Note</div>
-            {content}
+            <div class="insight-content">{content}</div>
         </div>
     """, unsafe_allow_html=True)
+    
+    # We render the CTA as a button via streamlit to ensure it can trigger session state
+    c1, c2 = st.columns([1, 4])
+    if c1.button("Ask Fin to explain this →", key=f"insight_cta_{hash(content)}"):
+        st.session_state.show_chat = True
+        # Pre-fill context or message if needed
+        if "chat_history" in st.session_state:
+            st.session_state.chat_history.append({"role": "user", "content": f"Can you explain this analyst note: '{content[:100]}...'?"})
+            # Trigger response generation logic
+            st.session_state.force_msg = f"Explain this note: {content}"
+        st.rerun()
 
 # ── Plotly Layouts ──
 
